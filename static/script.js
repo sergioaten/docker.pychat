@@ -69,7 +69,7 @@ $(document).ready(function() {
         // Remove the information message
         $('#no-messages').remove();
       } else {
-        displayErrorMessage('Please enter a message.');
+        displayErrorMessage('Por favor, introduce un mensaje.');
       }
     }
   
@@ -84,7 +84,7 @@ $(document).ready(function() {
           hideErrorMessage();
         }
       } else {
-        displayErrorMessage('Please enter a username.');
+        displayErrorMessage('Por favor, introduce un usuario.');
       }
     }
   
