@@ -24,8 +24,7 @@ $(document).ready(function() {
   
     // Display the chat history
     function showChatHistory(messages) {
-      var messagesContainer = $('#messages'); // Clear previous messages
-      
+      var messagesContainer = $('#messages');      
       if (messages.length > 0) {
         $('#no-messages').hide(); // Hide the "No messages yet" message
         
