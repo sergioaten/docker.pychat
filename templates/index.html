@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat interactivo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var socket = io.connect('http://localhost:5000');
+            var name = '';
+
+            function showNameForm() {
+                $('#name-form').show();
+                $('#chat-form').hide();
+            }
+
+            function showChatForm() {
+                $('#name-form').hide();
+                $('#chat-form').show();
+            }
+
+            function showChatHistory(messages) {
+                for (var i = 0; i < messages.length; i++) {
+                    var message = messages[i].message;
+                    var sender = messages[i].name;
+                    $('#messages').append('<li><strong>' + sender + ':</strong> ' + message + '</li>');
+                }
+            }
+
+            $('#name-submit').on('click', function() {
+                name = $('#name-input').val();
+                socket.emit('set_name', name);
+                showChatForm();
+            });
+
+            socket.on('chat_history', function(messages) {
+                showChatHistory(messages);
+            });
+
+            socket.on('message', function(data) {
+                var message = data.message;
+                var sender = data.name;
+                $('#messages').append('<li><strong>' + sender + ':</strong> ' + message + '</li>');
+            });
+
+            $('#send').on('click', function() {
+                var message = $('#message').val();
+                socket.emit('message', { 'message': message });
+                $('#message').val('');
+            });
+
+            showNameForm();
+        });
+    </script>
+</head>
+<body>
+    <h1>Chat interactivo</h1>
+
+    <div id="name-form">
+        <h3>Ingresa tu nombre</h3>
+        <input type="text" id="name-input">
+        <button id="name-submit">Ingresar</button>
+    </div>
+
+    <div id="chat-form" style="display: none;">
+        <ul id="messages"></ul>
+        <input type="text" id="message" placeholder="Escribe tu mensaje">
+        <button id="send">Enviar</button>
+    </div>
+</body>
+</html>
