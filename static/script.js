@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var socket = io.connect('http://localhost:5000');
+    var socket = io.connect(window.location.origin);
     var name = '';
     var errorVisible = false;
   
