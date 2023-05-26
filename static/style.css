@@ -20,7 +20,7 @@ body {
   
   /* Chat form styles */
   #chat-form {
-    width: 90%;
+    width: 95%;
     margin: 2%;
   }
   
@@ -38,7 +38,7 @@ body {
   /* Individual message styles */
   #messages li {
     margin-bottom: 10px;
-    font-size: 1.5em;
+    font-size: 0.8em;
   }
   
   #messages li strong {
