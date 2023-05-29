@@ -32,7 +32,7 @@ def handle_message(data):
     name = users[request.sid] if request.sid in users else 'Anónimo'
     
     # Create a message dictionary with the sender's name and the message content
-    message = {'name': name, 'message': data['message']}
+    message = {'name': name+"@devops:~$", 'message': data['message']}
     
     # Add the message to the messages list
     messages.append(message)
