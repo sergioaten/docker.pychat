@@ -31,7 +31,7 @@ $(document).ready(function() {
         for (var i = 0; i < messages.length; i++) {
           var message = messages[i].message;
           var sender = messages[i].name;
-          messagesContainer.append('<li><strong>' + sender + ':</strong> ' + message + '</li>');
+          messagesContainer.append('<li><strong>' + sender + '</strong> ' + message + '</li>');
         }
         
         // Scroll to the last message
