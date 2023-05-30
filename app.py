@@ -1,10 +1,13 @@
 # Import necessary modules
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, escape
 from flask_socketio import SocketIO, emit
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'mysecretkey'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Create SocketIO instance and associate it with the app
 socketio = SocketIO(app, async_mode='eventlet')
@@ -32,7 +35,7 @@ def handle_message(data):
     name = users[request.sid] if request.sid in users else 'Anónimo'
     
     # Create a message dictionary with the sender's name and the message content
-    message = {'name': name+"@devops:~$", 'message': data['message']}
+    message = {'name': escape(users[request.sid] + "@devops:~$") if request.sid in users else 'Anónimo','message': escape(data['message'])}
     
     # Add the message to the messages list
     messages.append(message)
