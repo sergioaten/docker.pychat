@@ -1,23 +1,48 @@
-/* Background styles */
+/* Terminal header styles */
+.terminal-header {
+  display: block;
+  align-items: center;
+  background-color: #000000;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  margin-bottom: 0;
+  width: 100%;
+  text-align: center;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.terminal-icon {
+  color: rgb(255, 255, 255);
+  font-size: 16px;
+  margin-right: 5px;
+}
+
+.terminal-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: rgb(255, 255, 255);
+}
+
+/* Body and main container styles */
 body {
   background-color: #393241 !important;
   overflow: hidden;
   font-family: 'Cascadia Code', monospace !important;
 }
 
-/* Container styles */
 .container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-margin: 2%;
+  margin: 2%;
   color: rgb(255, 255, 255);
-
-
   width: 95%;
 }
 
+/* Content styles */
 .content {
   background-color: #282B33;
   padding: 2%;
@@ -35,18 +60,18 @@ margin: 2%;
   text-align: center;
   align-items: center;
 }
+
 #name-form .input-group {
   width: 70%;
   margin: 0 auto;
   height: 50px;
 }
-.input-group .btn {
-  height: 100%;
-}
+
 #chat-form {
   width: 100%;
   margin-top: 20px;
 }
+
 #chat-form .input-group {
   width: 90%;
   margin: 0 auto;
@@ -76,7 +101,6 @@ margin: 2%;
 
 /* Input group append styles */
 .input-group-append {
-  /* padding: 1%; */
   padding-left: 3%;
 }
 
@@ -85,13 +109,16 @@ margin: 2%;
   text-align: center;
 }
 
+/* Form control styles */
 .form-control {
-  border-radius:  var(--bs-border-radius) !important;
+  border-radius: var(--bs-border-radius) !important;
 }
-.chat{
-  border-bottom-left-radius:  0 !important;
-  border-top-left-radius:  0 !important;
+
+.chat {
+  border-bottom-left-radius: 0 !important;
+  border-top-left-radius: 0 !important;
 }
+
 /* Footer styles */
 .footer {
   margin-top: 20px;
@@ -99,32 +126,6 @@ margin: 2%;
   text-align: center;
 }
 
-/* Terminal header styles */
-.terminal-header {
-  display: block;
-  align-items: center;
-  background-color: #000000;
-  color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  margin-bottom: 0;
-  width: 100%;
-  text-align: center;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-}
-
-.terminal-icon {
-  color: rgb(255, 255, 255);
-  font-size: 16px;
-  margin-right: 5px;
-}
-
-.terminal-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: rgb(255, 255, 255);
-}
 /* Button styles */
 .btn {
   padding: 8px 16px;
