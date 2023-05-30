@@ -2,6 +2,10 @@ $(document).ready(function() {
     var socket = io.connect(window.location.origin);
     var name = '';
     var errorVisible = false;
+
+    function escapeHtml(content) {
+      return $('<div>').text(content).html();
+    }
   
     // Scroll to the bottom of the messages list
     function scrollToBottom() {
@@ -62,7 +66,8 @@ $(document).ready(function() {
       var message = messageInput.val().trim();
   
       if (message !== '') {
-        socket.emit('message', { 'message': message });
+        var escapedMessage = escapeHtml(message);
+        socket.emit('message', { 'message': escapedMessage });
         messageInput.val('');
         hideErrorMessage();
   
@@ -108,9 +113,9 @@ $(document).ready(function() {
   
     // Event listener for receiving a new message from the server
     socket.on('message', function(data) {
-      var message = data.message;
-      var sender = data.name;
-      $('#messages').append('<li><strong>' + sender + ':</strong> ' + message + '</li>');
+      var message = escapeHtml(data.message);
+      var sender = escapeHtml(data.name);
+      $('#messages').append('<li><strong>' + sender + '</strong> ' + message + '</li>');
       scrollToBottom();
     });
   
