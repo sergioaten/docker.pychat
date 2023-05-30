@@ -108,6 +108,9 @@ body {
 .mb-3 {
   text-align: center;
 }
+.input-group .btn {
+  height: 100%;
+}
 
 /* Form control styles */
 .form-control {
