@@ -1,13 +1,56 @@
 # Import necessary modules
 from flask import Flask, render_template, request, escape
 from flask_socketio import SocketIO, emit
-
+from google.cloud import firestore
+from google.cloud import secretmanager
+import datetime
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+def get_firestone_credentials():
+    # Initialize Secret Manager client
+    secret_client = secretmanager.SecretManagerServiceClient()
+
+    # Retrieve the secret value
+    project_id = '1045040505707'
+    secret_name = 'firestone-json'
+    secret_version_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    response = secret_client.access_secret_version(request={"name": secret_version_name})
+    secret_value = response.payload.data.decode("UTF-8")
+
+    # Parse the secret value as JSON
+    import json
+    secret_data = json.loads(secret_value)
+
+def connection_database():
+    # Initialize Firestore client with the secret credentials
+    db = firestore.Client.from_service_account_info(secret_data)
+
+    # Retrieve the name and message fields from the "registros" collection in descending order
+    collection_ref = db.collection('registros')
+    query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
+    documents = query.get()
+    
+    print(timestamp)
+    for doc in documents:
+        data = doc.to_dict()
+        name = data['name']
+        message = data['message']
+        print(f'Name: {name}, Message: {message}')
+
+def get_current_time():
+    timestamp = datetime.datetime.now()
+    return timestamp
+
+def upload_to_firestore(data):
+    # Create a document in the "registros" collection with the name, message, and date_message
+    print(data)
+    collection_ref = db.collection('registros')
+    collection_ref.add(data)
 
 # Create SocketIO instance and associate it with the app
 socketio = SocketIO(app, async_mode='eventlet')
@@ -27,6 +70,8 @@ def index():
 def handle_connect():
     # Emit the 'chat_history' event and send the list of messages to the client
     emit('chat_history', messages)
+    connection_database()
+    get_firestone_credentials()
 
 # Event handler for incoming message event
 @socketio.on('message')
@@ -34,8 +79,16 @@ def handle_message(data):
     # Get the name of the sender from the users dictionary using the session ID
     name = users[request.sid] if request.sid in users else 'Anónimo'
     
+    # Get the current time and format it
+    time = get_current_time()
+    time_formated = time.strftime('%m/%d-%H:%M:%S')
+
+    # Sent the menssage data to database
+    message_to_database = {'name': escape(users[request.sid]), 'message': escape(data['message']), 'date_message': time }
+    upload_to_firestore(message_to_database)
+
     # Create a message dictionary with the sender's name and the message content
-    message = {'name': escape(users[request.sid] + "@devops:~$") if request.sid in users else 'Anónimo','message': escape(data['message'])}
+    message = {'name': escape(time_formated + " - " + users[request.sid] + "@devops:~$") if request.sid in users else 'Anónimo','message': escape(data['message'])}
     
     # Add the message to the messages list
     messages.append(message)
