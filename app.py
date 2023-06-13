@@ -26,14 +26,7 @@ def get_firestone_credentials():
     import json
     secret_data = json.loads(secret_value)
 
-def connection_database():
-    # Initialize Firestore client with the secret credentials
-    db = firestore.Client.from_service_account_info(secret_data)
-
-    # Retrieve the name and message fields from the "registros" collection in descending order
-    collection_ref = db.collection('registros')
-    query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
-    documents = query.get()
+    return secret_data
     
     print(timestamp)
     for doc in documents:
@@ -47,8 +40,13 @@ def get_current_time():
     return timestamp
 
 def upload_to_firestore(data):
+    # Get the Firestore credentials
+    secret_data = get_firestone_credentials()
+
+    # Initialize Firestore client with the secret credentials
+    db = firestore.Client.from_service_account_info(secret_data)
+
     # Create a document in the "registros" collection with the name, message, and date_message
-    print(data)
     collection_ref = db.collection('registros')
     collection_ref.add(data)
 
@@ -70,8 +68,7 @@ def index():
 def handle_connect():
     # Emit the 'chat_history' event and send the list of messages to the client
     emit('chat_history', messages)
-    connection_database()
-    get_firestone_credentials()
+
 
 # Event handler for incoming message event
 @socketio.on('message')
