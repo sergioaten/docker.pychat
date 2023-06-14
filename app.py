@@ -4,12 +4,15 @@ from flask_socketio import SocketIO, emit
 from google.cloud import firestore
 from google.cloud import secretmanager
 import datetime
+
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+db = None
 
 def get_firestone_credentials():
     # Initialize Secret Manager client
@@ -27,28 +30,53 @@ def get_firestone_credentials():
     secret_data = json.loads(secret_value)
 
     return secret_data
-    
-    print(timestamp)
-    for doc in documents:
-        data = doc.to_dict()
-        name = data['name']
-        message = data['message']
-        print(f'Name: {name}, Message: {message}')
 
-def get_current_time():
-    timestamp = datetime.datetime.now()
-    return timestamp
+def initialize_firestore():
+    global db
 
-def upload_to_firestore(data):
     # Get the Firestore credentials
     secret_data = get_firestone_credentials()
 
     # Initialize Firestore client with the secret credentials
     db = firestore.Client.from_service_account_info(secret_data)
 
-    # Create a document in the "registros" collection with the name, message, and date_message
+def upload_to_firestore(data):
+    global db
+
+    # Check if the Firestore client is initialized
+    if db is None:
+        initialize_firestore()
+
+    # Use the existing Firestore client for database operations
     collection_ref = db.collection('registros')
     collection_ref.add(data)
+
+def get_current_time():
+    timestamp = datetime.datetime.now()
+    return timestamp
+
+def charge_all_database():
+    global db
+    initialize_firestore()
+    collection_ref = db.collection('registros')
+    query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
+    documents = query.get()
+
+    # Prepare the list of messages
+    messages = []
+    for doc in documents:
+        data = doc.to_dict()
+        name = data['name']
+        msg = data['message']
+        time = data['date_message'].strftime('%m/%d-%H:%M:%S')  # Convert to string
+        message = {'name': time + " - " + name + "@devops:~$", 'message': msg}
+        messages.append(message)
+    f = open("desde_charge.txt", "w+")
+    msg = "\n".join(str(message) for message in messages)
+    f.write(msg)
+    f.close()
+
+    return messages  
 
 # Create SocketIO instance and associate it with the app
 socketio = SocketIO(app, async_mode='eventlet')
@@ -66,10 +94,8 @@ def index():
 # Event handler for client connect event
 @socketio.on('connect')
 def handle_connect():
-    # Emit the 'chat_history' event and send the list of messages to the client
     emit('chat_history', messages)
-
-
+    
 # Event handler for incoming message event
 @socketio.on('message')
 def handle_message(data):
@@ -86,12 +112,13 @@ def handle_message(data):
 
     # Create a message dictionary with the sender's name and the message content
     message = {'name': escape(time_formated + " - " + users[request.sid] + "@devops:~$") if request.sid in users else 'Anónimo','message': escape(data['message'])}
-    
+
     # Add the message to the messages list
     messages.append(message)
     
     # Emit the 'message' event and broadcast it to all connected clients
     emit('message', message, broadcast=True)
+
 
 # Event handler for setting the user's name
 @socketio.on('set_name')
@@ -99,6 +126,20 @@ def set_name(name):
     # Store the user's name in the users dictionary with the session ID as the key
     users[request.sid] = name
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Handle the form submission
+        name = request.form['username']
+        #email = request.form['email']
+        password = request.form['password']
+        # Process the registration data as needed
+        # Add the registration logic here
+        return 'Registration successful'  # You can render a template or redirect to another page
+    # Render the registration form template for GET requests
+    return render_template('register.html')
+
 # Run the app when the script is executed directly
 if __name__ == '__main__':
+    messages = charge_all_database()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

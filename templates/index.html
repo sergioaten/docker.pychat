@@ -15,10 +15,10 @@
         <div class="terminal-header">
             <span class="terminal-title">👩‍💻&nbsp;<i class="fa-solid fa-terminal"></i> DevOps Chat</span>
             <div style="float:right;">
-            <span class="terminal-icon fas fa-window-minimize"></span>
-<span class="terminal-icon fas fa-square"></span>
-<span class="terminal-icon fas fa-times"></span>
-</div>
+                <span class="terminal-icon fas fa-window-minimize"></span>
+                <span class="terminal-icon fas fa-square"></span>
+                <span class="terminal-icon fas fa-times"></span>
+            </div>
         </div>
         <div class="content">
             <div id="name-form">
@@ -28,9 +28,9 @@
                     <div class="input-group-append">
                         <button id="name-submit" class="btn btn-primary">Ingresar</button>
                     </div>
-                </div>    
+                </div>
             </div>
-
+    
             <div id="chat-form" class="chat-form">
                 <div id="messages-container">
                     <ul id="messages" class="list-unstyled mb-4">
@@ -50,8 +50,24 @@
             <div id="error-message" class="alert alert-danger" style="display: none;">
                 <span id="error-close" class="error-close">&times;</span>
             </div>
+            <button id="register-buttom" class="btn btn-primary">Registro</button>
+            <div id="register-form" class="register-form" style="display: none;">
+                <div id="register-container">
+                    <h3 class="mb-3">Registration</h3>
+                    <div class="input-group mb-3">
+                        <input type="text" id="username-input" class="form-control" placeholder="Username">
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="email" id="email-input" class="form-control" placeholder="Email">
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="password" id="password-input" class="form-control" placeholder="Password">
+                    </div>
+                    <button id="register-submit" class="btn btn-primary">Register</button>
+                </div>
+            </div>
             <div class="footer">Hecho por Sergio A. & Chat-GPT 🐒</div>
-        </div>        
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
@@ -60,5 +76,17 @@
     <!-- Scripts de Bootstrap (requiere jQuery) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Event listener for the register submit button click
+        document.getElementById('register-submit').addEventListener('click', function() {
+            // Get the form input values
+            var username = document.getElementById('username-input').value;
+            var email = document.getElementById('email-input').value;
+            var password = document.getElementById('password-input').value;
+            
+            // TODO: Perform registration logic with the input values
+            // You can use AJAX requests or submit the form to a Flask route for processing
+        });
+    </script>
 </body>
 </html>
