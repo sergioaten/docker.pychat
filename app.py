@@ -163,10 +163,13 @@ def register():
             return jsonify(result='error', message='Username already exists'), 200
         else:
             hashed_password = u.hash_password(password)
+            # Get the server time
+            server_time = firestore.SERVER_TIMESTAMP
             # Create a new user document with the provided username and password
             new_user = {
                 'username': name,
-                'password': hashed_password
+                'password': hashed_password,
+                'register_date': server_time
             }
             collection_ref.add(new_user)  # Add the new user document to the 'usuarios' collection
 
