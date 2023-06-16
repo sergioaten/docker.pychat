@@ -101,34 +101,84 @@ $(document).ready(function() {
   });
 
   $('#register-submit').on('click', function() {
-      var username = $('#username-input').val().trim();
-      //var email = $('#email-input').val().trim();
-      var password = $('#password-input').val().trim();
+    var username = $('#username-input').val().trim();
+    var hash = $('#hash-input').val().trim();
+    var password = $('#password-input').val().trim();
 
-      // Create an object with the registration data
-      var registrationData = {
-          username: username,
-          //email: email,
-          password: password
-      };
+    // Create an object with the registration data
+    var registrationData = {
+        username: username,
+        hash: hash,
+        password: password
+    };
 
-      // Send the registration data to the back-end using AJAX
-      $.ajax({
-          type: 'POST',
-          url: '/register', // Update with the appropriate URL for your back-end route
-          data: registrationData,
-          success: function(response) {
-              // Handle the success response from the server
-              console.log(response); // Log the response for debugging purposes
-              // TODO: Handle the response accordingly (e.g., display a success message, redirect to a new page, etc.)
-          },
-          error: function(error) {
-              // Handle the error response from the server
-              console.error(error); // Log the error for debugging purposes
-              // TODO: Handle the error accordingly (e.g., display an error message to the user)
-          }
-      });
-  });
+    // Send the registration data to the back-end using AJAX
+    $.ajax({
+        type: 'POST',
+        url: '/register', // Update with the appropriate URL for your back-end route
+        data: registrationData,
+        success: function(response) {
+            // Handle the success response from the server
+            console.log(response); // Log the response for debugging purposes
+    
+            if (response.result === "create") {
+                // Display the success message
+                displaySuccessMessage(response.message);
+            } else {
+                // Display the error message
+                displayErrorMessage(response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Handle the error response from the server
+            console.error(error); // Log the error for debugging purposes
+    
+            // Display the error message
+            displayErrorMessage('An error occurred. Please try again.');
+        }
+    });
+});
+  // Function to display the success message
+function displaySuccessMessage(message) {
+    // Set the success message text
+    $('#user-success-message').text(message);
+
+    // Show the success message
+    $('#user-success-message').show();
+
+    // Hide the success message after a certain duration (e.g., 3 seconds)
+    setTimeout(function() {
+        $('#user-success-message').hide();
+    }, 3000);
+}
+
+// Function to display the error message
+function displayErrorMessage(message) {
+    // Set the error message text
+    $('#user-error-message').text(message);
+
+    // Show the error message
+    $('#user-error-message').show();
+
+    // Hide the error message after a certain duration (e.g., 5 seconds)
+    setTimeout(function() {
+        $('#user-error-message').hide();
+    }, 5000);
+}
+
+// Function to display the token error message
+function displayTokenErrorMessage(message) {
+    // Set the token error message text
+    $('#token-error-message').text(message);
+
+    // Show the token error message
+    $('#token-error-message').show();
+
+    // Hide the token error message after a certain duration (e.g., 5 seconds)
+    setTimeout(function() {
+        $('#token-error-message').hide();
+    }, 5000);
+}
 
   // Event listener for the name submit button click
   $('#name-submit').on('click', function() {
