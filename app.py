@@ -1,10 +1,10 @@
 # Import necessary modules
-from flask import Flask, render_template, request, escape
+from flask import Flask, render_template, request, escape, jsonify
 from flask_socketio import SocketIO, emit
 from google.cloud import firestore
 from google.cloud import secretmanager
 import datetime
-import users 
+import users as u
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
@@ -140,29 +140,42 @@ def register():
 
     if request.method == 'POST':
         # Handle the form submission
-        name = request.form['username']
-        # email = request.form['email']
-        password = request.form['password']
-        
+        name = request.form['username']  
+        hash_value = request.form['hash']  
+        password = request.form['password'] 
+
+        # Check if the hash value exists in the 'secret' collection
+        collection_ref = db.collection('secret')
+        query = collection_ref.where('register_token', '==', hash_value)  # Query for documents where 'register_token' is equal to the provided hash
+        result_hash_check = query.get()
+
+        if len(result_hash_check) == 0:
+            # No hash check found, indicating an invalid hash
+            return jsonify(result='error', message='Wrong hash'), 200
+
+        # Check if the username already exists in the 'usuarios' collection
         collection_ref = db.collection('usuarios')
-        query = collection_ref.where('username', '==', name)
+        query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
         result = query.get()
         
         if len(result) > 0:
             # Username already exists
-            return 'Username already exists'
+            return jsonify(result='error', message='Username already exists'), 200
         else:
-            # Create the new user document
+            hashed_password = u.hash_password(password)
+            # Create a new user document with the provided username and password
             new_user = {
                 'username': name,
-                'password': password
+                'password': hashed_password
             }
-            collection_ref.add(new_user)
-            
-            return 'Registration successful'
-    
+            collection_ref.add(new_user)  # Add the new user document to the 'usuarios' collection
+
+            return jsonify(result='create', message='Registration successful'), 200
+
     # Render the registration form template for GET requests
     return render_template('index.html')
+
+
 
 # Run the app when the script is executed directly
 if __name__ == '__main__':
