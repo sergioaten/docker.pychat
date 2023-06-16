@@ -3,3 +3,4 @@ flask_socketio
 eventlet
 google-cloud-secret-manager
 google-cloud-firestore
+bcrypt

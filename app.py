@@ -4,6 +4,7 @@ from flask_socketio import SocketIO, emit
 from google.cloud import firestore
 from google.cloud import secretmanager
 import datetime
+import users 
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
@@ -44,12 +45,18 @@ def upload_to_firestore(data):
     global db
 
     # Check if the Firestore client is initialized
-    if db is None:
-        initialize_firestore()
+    check_db_connection()
 
     # Use the existing Firestore client for database operations
     collection_ref = db.collection('registros')
     collection_ref.add(data)
+
+def check_db_connection():
+    global db
+
+    # Check if the Firestore client is initialized
+    if db is None:
+        initialize_firestore()
 
 def get_current_time():
     timestamp = datetime.datetime.now()
@@ -126,18 +133,36 @@ def set_name(name):
     # Store the user's name in the users dictionary with the session ID as the key
     users[request.sid] = name
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['POST'])
 def register():
+    global db
+    check_db_connection()
+
     if request.method == 'POST':
         # Handle the form submission
         name = request.form['username']
-        #email = request.form['email']
+        # email = request.form['email']
         password = request.form['password']
-        # Process the registration data as needed
-        # Add the registration logic here
-        return 'Registration successful'  # You can render a template or redirect to another page
+        
+        collection_ref = db.collection('usuarios')
+        query = collection_ref.where('username', '==', name)
+        result = query.get()
+        
+        if len(result) > 0:
+            # Username already exists
+            return 'Username already exists'
+        else:
+            # Create the new user document
+            new_user = {
+                'username': name,
+                'password': password
+            }
+            collection_ref.add(new_user)
+            
+            return 'Registration successful'
+    
     # Render the registration form template for GET requests
-    return render_template('register.html')
+    return render_template('index.html')
 
 # Run the app when the script is executed directly
 if __name__ == '__main__':
