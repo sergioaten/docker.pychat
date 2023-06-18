@@ -3,8 +3,7 @@ FROM python:3.11.0-alpine
 RUN mkdir app
 WORKDIR /app
 
-ARG credentials
-COPY $credentials credentials.json
+COPY credentials.json .
 ENV GOOGLE_APPLICATION_CREDENTIALS=credentials.json
 
 COPY static/* static/

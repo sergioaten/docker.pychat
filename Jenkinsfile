@@ -64,7 +64,10 @@ pipeline {
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
-                sh 'docker build . -t ${dockerimg_name}'
+                withCredentials([file(credentialsId: 'application_credentials', variable: 'SECRET_FILE')]) {
+                    sh 'cp $SECRET_FILE credentials.json'
+                    sh 'docker build . -t ${dockerimg_name}'
+                }
                 script {
                     echo "Getting the port used by the image for deployment"
                     env.port = sh(script: "docker inspect --format='{{range \$p, \$conf := .Config.ExposedPorts}} {{\$p}} {{end}}' ${dockerimg_name} | grep -oE '[0-9]+'", returnStdout: true).trim()
@@ -88,10 +91,12 @@ pipeline {
 
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
+                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}'")
+                        // sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
                     } else {
                         echo "The container is not running. Deploying the service."
-                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
+                        // sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
+                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}'")
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
                     sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
