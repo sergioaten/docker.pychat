@@ -33,7 +33,7 @@ pipeline {
                     service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: "gcloud config set account ${service_account_email}", returnStdout: true).trim()
-                    sh(script: 'sudo cp ${application_credentials} credentials.json', returnStdout: true).trim()
+                    sh(script: 'sudo cp $application_credentials credentials.json', returnStdout: true).trim()
                 }
             }
         }
@@ -89,11 +89,9 @@ pipeline {
 
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        //sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}'")
                         sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
                     } else {
                         echo "The container is not running. Deploying the service."
-                        //sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}'")
                         sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
