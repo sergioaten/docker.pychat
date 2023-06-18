@@ -33,7 +33,7 @@ pipeline {
                     service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: "gcloud config set account ${service_account_email}", returnStdout: true).trim()
-                    sh(script: "cp ${application_credentials} credentials.json", returnStdout: true).trim()
+                    sh(script: 'sudo cp ${application_credentials} credentials.json', returnStdout: true).trim()
                 }
             }
         }
