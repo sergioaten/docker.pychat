@@ -7,7 +7,7 @@ pipeline {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
-        application_credentials = credentials('gcp-pychat-json')
+        application_credentials = 'gcp-pychat-json'
         region = 'us-central1' //Google Cloud Region
         artifact_registry = "${region}-docker.pkg.dev" //Artifact Registry URL
         service_name = 'pychat' //Service name
@@ -65,6 +65,7 @@ pipeline {
             steps {
                 sh 'echo Building Docker image'
                 withCredentials([file(credentialsId: 'application_credentials', variable: 'SECRET_FILE')]) {
+                    sh 'ls -l'
                     sh 'cp $SECRET_FILE credentials.json'
                     sh 'docker build . -t ${dockerimg_name}'
                 }
