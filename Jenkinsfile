@@ -88,8 +88,7 @@ pipeline {
                     sh 'echo Publishing the Cloud Run service for all users'
                     sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
                     sh 'echo Performing test on the deployed application'
-
-                    def url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'", returnStdout: true).trim()
+                    env.url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'", returnStdout: true).trim()
                     def responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true).trim()
 
                     if (responseCode == '200') {
