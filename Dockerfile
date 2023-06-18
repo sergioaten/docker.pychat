@@ -4,8 +4,8 @@ RUN mkdir app
 WORKDIR /app
 
 COPY credentials.json .
-COPY static/ .
-COPY templates/ .
+COPY static/ static/
+COPY templates/ templates/
 COPY *.py .
 COPY requirements.txt requirements.txt
 
