@@ -64,7 +64,7 @@ pipeline {
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
-                withCredentials([file(credentialsId: 'application_credentials', variable: 'SECRET_FILE')]) {
+                withCredentials([file(credentialsId: application_credentials, variable: 'SECRET_FILE')]) {
                     sh 'ls -l'
                     sh 'cp $SECRET_FILE credentials.json'
                     sh 'docker build . -t ${dockerimg_name}'
