@@ -4,11 +4,9 @@ RUN mkdir app
 WORKDIR /app
 
 COPY credentials.json .
-ENV GOOGLE_APPLICATION_CREDENTIALS=credentials.json
-
-COPY static/* static/
-COPY templates/* templates/
-COPY * .
+COPY static/ static/
+COPY templates/ templates/
+COPY *.py .
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
