@@ -4,7 +4,8 @@ RUN mkdir app
 WORKDIR /app
 
 ARG credentials
-ENV GOOGLE_APPLICATION_CREDENTIALS=${credentials}
+COPY $credentials credentials.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=credentials.json
 
 COPY static/* static/
 COPY templates/* templates/
