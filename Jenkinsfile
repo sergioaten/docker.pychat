@@ -94,13 +94,14 @@ pipeline {
     post {
         always{
             office365ConnectorSend webhookUrl: msteams_webhook,
-            message: "Job ${env.JOB_NAME} completed!",
+            message: "Job ${env.JOB_NAME} completed!(<${env.BUILD_URL}|Open>)",
             factDefinitions: [
                 [name: "Job Name", template: env.JOB_NAME],
                 [name: "Build Number", template: env.BUILD_NUMBER],
+                [name: "Build Number", template: env.BUILD_URL],
                 [name: "Application URL", template: env.url]
             ],
-            status: "Success (<${env.BUILD_URL}|Open>)",
+            status: "Success",
             color: "#00FF00"
         }
     }
