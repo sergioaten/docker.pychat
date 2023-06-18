@@ -4,6 +4,7 @@ pipeline {
     }
     environment {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
+        msteams_webhook = credentials('msteams-webhook-test')
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
         application_credentials = credentials('gcp-pychat-json') 
@@ -89,4 +90,13 @@ pipeline {
             }
         }
     }
+
+    post {
+        always{
+            office365ConnectorSend webhookUrl: msteams_webhook,
+            message: "Job ${env.JOB_NAME} completed!",
+            status: "Success"
+        }
+    }
+
 }
