@@ -7,7 +7,7 @@ pipeline {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
-        application_credentials = 'gcp-pychat-json'
+        application_credentials = credentials('gcp-pychat-json') 
         region = 'us-central1' //Google Cloud Region
         artifact_registry = "${region}-docker.pkg.dev" //Artifact Registry URL
         service_name = 'pychat' //Service name
@@ -33,6 +33,7 @@ pipeline {
                     service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: "gcloud config set account ${service_account_email}", returnStdout: true).trim()
+                    sh(script: "cp ${application_credentials} credentials.json", returnStdout: true).trim()
                 }
             }
         }
@@ -64,11 +65,7 @@ pipeline {
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
-                withCredentials([file(credentialsId: application_credentials, variable: 'SECRET_FILE')]) {
-                    sh 'ls -l'
-                    sh 'cp $SECRET_FILE credentials.json'
-                    sh 'docker build . -t ${dockerimg_name}'
-                }
+                sh 'docker build . -t ${dockerimg_name}'
                 script {
                     echo "Getting the port used by the image for deployment"
                     env.port = sh(script: "docker inspect --format='{{range \$p, \$conf := .Config.ExposedPorts}} {{\$p}} {{end}}' ${dockerimg_name} | grep -oE '[0-9]+'", returnStdout: true).trim()
