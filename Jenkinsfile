@@ -31,10 +31,8 @@ pipeline {
                     service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: "gcloud config set account ${service_account_email}", returnStdout: true).trim()
-                    sh(script: 'sudo cp ${application_credentials} credentials.json', returnStdout: true).trim()
+                    sh(script: 'sudo cp $application_credentials credentials.json', returnStdout: true).trim()
                     sh(script: 'sudo chown jenkins:jenkins credentials.json', returnStdout: true).trim()
-                    sh(script: 'cat credentials.json', returnStdout: true).trim()
-                    sh(script: 'ls -l', returnStdout: true).trim()
                 }
             }
         }
@@ -47,19 +45,7 @@ pipeline {
                 sh 'python3 -m pip install -r requirements.txt'
             }
         }
-        // stage('Code quality') {
-        //     steps {
-        //         sh 'echo Testing code quality'
-        //         sh 'python3 -m pylint app.py > pylint_report.txt'
-        //         sh 'cat pylint_report.txt'
-        //     }
-        // }
-        // stage('Tests') {
-        //     steps {
-        //         sh 'echo Running application tests'
-        //         sh 'python3 -m pytest'
-        //     }
-        // }
+
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
