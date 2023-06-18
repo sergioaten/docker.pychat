@@ -2,7 +2,6 @@ pipeline {
     agent {
         label "agent"; 
     }
-
     environment {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
@@ -14,7 +13,6 @@ pipeline {
         repo = 'jenkins-repo' //Artifact Registry repo
         test_path_url = '/' //Url with "/"
     }
-
     stages {
         stage('Preparing environment') {
             steps {
