@@ -5,8 +5,9 @@ pipeline {
 
     environment {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
-        dev_credentials = credentials('gcp-cloudrun-json-test') //Load dev credentials
+        dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
+        application_credentials = credentials('gcp-pychat-json')
         region = 'us-central1' //Google Cloud Region
         artifact_registry = "${region}-docker.pkg.dev" //Artifact Registry URL
         service_name = 'pychat' //Service name
@@ -63,7 +64,7 @@ pipeline {
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
-                sh 'docker build . -t ${dockerimg_name}'
+                sh 'docker build . -t ${dockerimg_name} --build-arg=${application_credentials}'
                 script {
                     echo "Getting the port used by the image for deployment"
                     env.port = sh(script: "docker inspect --format='{{range \$p, \$conf := .Config.ExposedPorts}} {{\$p}} {{end}}' ${dockerimg_name} | grep -oE '[0-9]+'", returnStdout: true).trim()
