@@ -106,6 +106,9 @@ pipeline {
         always{
             office365ConnectorSend webhookUrl: msteams_webhook,
             message: "Job ${env.JOB_NAME} completed!",
+            factDefinitions: [ 
+                "Application URL": ${url}
+            ],
             status: "Success"
         }
     }
