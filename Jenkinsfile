@@ -2,8 +2,10 @@ pipeline {
     agent {
         label "agent"; 
     }
+
     environment {
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
+        URL_WEBHOOK = 'https://tajamar365.webhook.office.com/webhookb2/366805df-f78f-4ef7-a2c2-9ac983cb405c@68519e48-83f3-435f-a38a-1a7aa77ba987/IncomingWebhook/207d62ed1b304c7d90ef41175e8f2a07/4daf1605-f9c2-4764-af66-03132466ca09'
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
         application_credentials = credentials('gcp-pychat-json') 
@@ -13,6 +15,14 @@ pipeline {
         repo = 'jenkins-repo' //Artifact Registry repo
         test_path_url = '/' //Url with "/"
     }
+
+    options {
+        office365ConnectorWebhooks([
+            [name: "Office 365", url: "${URL_WEBHOOK}", notifyBackToNormal: true, notifyFailure: true, notifyRepeatedFailure: true, notifySuccess: true, notifyAborted: true]
+        ])
+    }
+
+
     stages {
         stage('Preparing environment') {
             steps {
@@ -87,6 +97,14 @@ pipeline {
                     }
                 } 
             }
+        }
+    }
+
+    post {
+        always {
+            office365ConnectorSend webhookUrl: "${URL_WEBHOOK}",
+                message: 'Code is deployed',
+                status: 'Success'
         }
     }
 }
