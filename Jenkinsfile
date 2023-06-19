@@ -112,8 +112,8 @@ pipeline {
                             echo 'Error caught: ${e.message}'
                         }
 
-                        def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 | tail -n 1", returnStdout: true).trim()
-                        sh(script: "gcloud run revisions update-traffic '${service_name}' --to-revisions='${last_revision}'", returnStdout: true).trim()
+                        def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 --region='${region}' | tail -n 1", returnStdout: true).trim()
+                        sh(script: "gcloud run services update-traffic '${service_name}' --to-revisions='${last_revision}' --region='${region}'", returnStdout: true).trim()
                     }
                 } 
             }
