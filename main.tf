@@ -20,6 +20,13 @@ module "project-factory_project_services" {
   disable_services_on_destroy = false
 }
 
+resource "google_artifact_registry_repository" "repo" {
+  location      = var.region
+  repository_id = var.repo
+  format        = "DOCKER"
+
+}
+
 resource "null_resource" "build_image" {
   triggers = {
     value = local.image_name
@@ -45,13 +52,6 @@ resource "null_resource" "build_image" {
     EOF
   }
   depends_on = [module.project-factory_project_services, google_artifact_registry_repository.repo]
-}
-
-resource "google_artifact_registry_repository" "repo" {
-  location      = var.region
-  repository_id = var.repo
-  format        = "DOCKER"
-
 }
 
 resource "google_cloud_run_service" "app" {
