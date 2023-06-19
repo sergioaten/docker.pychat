@@ -21,6 +21,10 @@ module "project-factory_project_services" {
 }
 
 resource "null_resource" "build_image" {
+  triggers = {
+    value = local.image_name
+  }
+
   provisioner "local-exec" {
     command = <<-EOF
       #!/bin/bash
@@ -37,20 +41,17 @@ resource "null_resource" "build_image" {
       echo -n $port_number > port
 
       gcloud auth configure-docker ${local.artifact_registry} --quiet
-      REPO_NAME="${var.repo}"
-
-      # Verificar si el repositorio ya existe
-      if gcloud artifacts repositories describe "$REPO_NAME" --location="${var.region}" --project="${var.project_id}" >/dev/null 2>&1; then
-        echo "El repositorio $REPO_NAME ya existe. No se realizará ninguna acción."
-      else
-        echo "Creando el repositorio $REPO_NAME..."
-        gcloud artifacts repositories create "$REPO_NAME" --location="${var.region}" --repository-format=docker --project="${var.project_id}"
-        echo "Repositorio creado exitosamente."
-      fi
       docker push ${local.image_name}
     EOF
   }
-  depends_on = [module.project-factory_project_services]
+  depends_on = [module.project-factory_project_services, google_artifact_registry_repository.repo]
+}
+
+resource "google_artifact_registry_repository" "repo" {
+  location      = var.region
+  repository_id = var.repo
+  format        = "DOCKER"
+
 }
 
 resource "google_cloud_run_service" "app" {
