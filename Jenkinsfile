@@ -3,16 +3,16 @@ pipeline {
         label "agent"; 
     }
     environment {
-        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
-        msteams_webhook = credentials('msteams-webhook-test')
+        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}" //Split branch name from origin/branchname
+        msteams_webhook = credentials('msteams-webhook-test') //MS Teams webhook
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
-        application_credentials = credentials('gcp-pychat-json') 
+        application_credentials = credentials('gcp-pychat-json') //Application credentials
         region = 'us-central1' //Google Cloud Region
         artifact_registry = "${region}-docker.pkg.dev" //Artifact Registry URL
         service_name = 'pychat' //Service name
         repo = 'jenkins-repo' //Artifact Registry repo
-        test_path_url = '/' //Url with "/"
+        test_path_url = '/' //Url with "/" - example -> /test
     }
     stages {
         stage('Preparing environment') {
@@ -81,10 +81,10 @@ pipeline {
                     sh 'echo Performing test on the deployed application'
                     env.url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'", returnStdout: true).trim()
                     def responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true).trim()
-                    if (responseCode == '200') {
-                        echo 'The test passed. The response is 200 OK.'
+                    if (responseCode == '2*') {
+                        echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
-                        error 'The test failed. The response is not 200.'
+                        error 'The test failed. The response is ${responseCode} FAIL.'
                     }
                 } 
             }
@@ -107,12 +107,11 @@ pipeline {
 
         failure {
             office365ConnectorSend webhookUrl: msteams_webhook,
-            message: "Job completed!",
+            message: "Job error!",
             factDefinitions: [
                 [name: "Job Name", template: env.JOB_NAME],
                 [name: "Build Number", template: env.BUILD_NUMBER],
-                [name: "Build URL", template: env.BUILD_URL],
-                [name: "Application URL", template: env.url]
+                [name: "Build URL", template: env.BUILD_URL]
             ],
             status: "Success",
             color: "#FF0000"
