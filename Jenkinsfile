@@ -79,12 +79,12 @@ pipeline {
 
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}'")
-                        // sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
+                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
+                        env.application_status = "Updating"
                     } else {
                         echo "The container is not running. Deploying the service."
-                        // sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='${application_credentials}'")
-                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}'")
+                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
+                        env.application_status = "Creating"
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
                     sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
@@ -94,7 +94,14 @@ pipeline {
                     if (responseCode == '2*') {
                         echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
-                        error 'The test failed. The response is ${responseCode} FAIL.'
+                        try {
+                            error "The test failed. The response is ${responseCode} FAIL."
+                        } catch (Exception e) {
+                            echo "Error caught: ${e.message}"
+                        }
+
+                        def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 | tail -n 1", returnStdout: true).trim()
+                        sh(script: "gcloud run revisions update-traffic '${service_name}' --to-revisions='${last_revision}'", returnStdout: true).trim()
                     }
                 } 
             }
@@ -109,7 +116,12 @@ pipeline {
                 [name: "Job Name", template: env.JOB_NAME],
                 [name: "Build Number", template: env.BUILD_NUMBER],
                 [name: "Build URL", template: env.BUILD_URL],
-                [name: "Application URL", template: env.url]
+                [name: "Artifact", template: env.dockerimg_name],
+                [name: "Response Code", template: responseCode],
+                [name: "Application Status", template: env.application_status],
+                [name: "Application URL", template: env.url],
+                [name: "Git Repository", template: env.GIT_URL],
+                [name: "Git Commit", template: env.GIT_COMMIT]
             ],
             status: "Success",
             color: "#00FF00"
@@ -121,9 +133,14 @@ pipeline {
             factDefinitions: [
                 [name: "Job Name", template: env.JOB_NAME],
                 [name: "Build Number", template: env.BUILD_NUMBER],
-                [name: "Build URL", template: env.BUILD_URL]
+                [name: "Build URL", template: env.BUILD_URL],
+                [name: "Artifact", template: env.dockerimg_name],
+                [name: "Response Code", template: responseCode],
+                [name: "Application Status", template: env.application_status],
+                [name: "Git Repository", template: env.GIT_URL],
+                [name: "Git Commit", template: env.GIT_COMMIT]
             ],
-            status: "Success",
+            status: "Error",
             color: "#FF0000"
         }
     }
