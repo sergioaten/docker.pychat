@@ -102,8 +102,8 @@ pipeline {
                     sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
                     sh 'echo Performing test on the deployed application'
                     env.url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'", returnStdout: true).trim()
-                    def responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true).trim()
-                    if (responseCode == '2*') {
+                    env.responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true).trim()
+                    if (responseCode.matches('^2.*$')) {
                         echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
                         error 'The test failed. The response is ${responseCode} FAIL.'
@@ -121,7 +121,12 @@ pipeline {
                 [name: "Job Name", template: env.JOB_NAME],
                 [name: "Build Number", template: env.BUILD_NUMBER],
                 [name: "Build URL", template: env.BUILD_URL],
-                [name: "Application URL", template: env.url]
+                [name: "Artifact", template: env.dockerimg_name],
+                [name: "Response Code", template: env.responseCode],
+                [name: "Application Status", template: env.application_status],
+                [name: "Application URL", template: env.url],
+                [name: "Git Repository", template: env.GIT_URL],
+                [name: "Git Commit", template: env.GIT_COMMIT]
             ],
             status: "Success",
             color: "#00FF00"
