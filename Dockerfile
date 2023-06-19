@@ -3,9 +3,10 @@ FROM python:3.11.0-alpine
 RUN mkdir app
 WORKDIR /app
 
-COPY static/* static/
-COPY templates/* templates/
-COPY app.py app.py
+COPY credentials.json .
+COPY static/ static/
+COPY templates/ templates/
+COPY *.py .
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
