@@ -87,9 +87,9 @@ pipeline {
                         echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
                         try {
-                            error "The test failed. The response is ${responseCode} FAIL."
+                            error 'The test failed. The response is ${responseCode} FAIL.'
                         } catch (Exception e) {
-                            echo "Error caught: ${e.message}"
+                            echo 'Error caught: ${e.message}'
                         }
 
                         def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 | tail -n 1", returnStdout: true).trim()
