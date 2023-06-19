@@ -106,7 +106,14 @@ pipeline {
                     if (responseCode.matches('^2.*$')) {
                         echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
-                        error 'The test failed. The response is ${responseCode} FAIL.'
+                        try {
+                            error 'The test failed. The response is ${responseCode} FAIL.'
+                        } catch (Exception e) {
+                            echo 'Error caught: ${e.message}'
+                        }
+
+                        def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 | tail -n 1", returnStdout: true).trim()
+                        sh(script: "gcloud run revisions update-traffic '${service_name}' --to-revisions='${last_revision}'", returnStdout: true).trim()
                     }
                 } 
             }
