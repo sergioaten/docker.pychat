@@ -89,7 +89,7 @@ pipeline {
                     sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
                     sh 'echo Performing test on the deployed application'
                     env.url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'")
-                    env.responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}")
+                    env.responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true)
                     if (responseCode.matches('^2.*$')) {
                         echo 'The test passed. The response is ${responseCode} OK.'
                     } else {
