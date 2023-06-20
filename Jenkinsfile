@@ -126,13 +126,13 @@ pipeline {
                         --role="roles/run.invoker" \
                         --region="${region}" \
                         --project="${project_id}"'
-                    sh 'echo Performing test on the deployed application'
                 }
             }
         }
         stage('HTTP REST Test') {
             steps {
-                script {        
+                script {
+                    sh 'echo Performing test on the deployed application'        
                     env.url = sh(
                         script: "gcloud run services describe ${env.service_name} \
                                 --format='value(status.url)' \
