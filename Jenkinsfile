@@ -214,5 +214,4 @@ pipeline {
             color: "#FF0000"
         }
     }
-
 }
