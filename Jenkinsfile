@@ -103,7 +103,7 @@ pipeline {
                             --port='${env.port}' \
                             --project='${env.project_id}' \
                             --service-account='${env.app_serviceaccount}'")
-                        sh("gcloud run services update-traffic ${env.service.name} \
+                        sh("gcloud run services update-traffic ${env.service_name} \
                         --to-latest \
                         --region='${env.region}")
                         env.application_status = "Updating"
@@ -115,7 +115,7 @@ pipeline {
                             --port=${env.port} \
                             --project='${env.project_id}' \
                             --service-account='${env.app_serviceaccount}'")
-                        sh("gcloud run services update-traffic ${env.service.name} \
+                        sh("gcloud run services update-traffic ${env.service_name} \
                         --to-latest \
                         --region='${env.region}")
                         env.application_status = "Creating"
