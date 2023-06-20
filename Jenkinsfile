@@ -100,25 +100,21 @@ pipeline {
                         ) == 0
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        sh(
-                            "gcloud run services update ${service_name} \
+                        sh("gcloud run services update ${service_name} \
                             --image='${dockerimg_name}' \
                             --region='${region}' \
                             --port='${port}' \
                             --project='${project_id}' \
-                            --service-account='${app_serviceaccount}'"
-                        )
+                            --service-account='${app_serviceaccount}'")
                         env.application_status = "Updating"
                     } else {
                         echo "The container is not running. Deploying the service."
-                        sh(
-                            "gcloud run deploy ${service_name} \
+                        sh("gcloud run deploy ${service_name} \
                             --image='${dockerimg_name}' \
                             --region='${region}' \
                             --port=${port} \
                             --project='${project_id}' \
-                            --service-account='${app_serviceaccount}'"
-                        )
+                            --service-account='${app_serviceaccount}'")
                         env.application_status = "Creating"
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
@@ -158,11 +154,9 @@ pipeline {
                             | tail -n 1",
                             returnStdout: true
                         )
-                        sh(
-                            "gcloud run services update-traffic '${service_name}' \
+                        sh("gcloud run services update-traffic '${service_name}' \
                             --to-revisions='${last_revision}' \
-                            --region='${region}'"
-                        )
+                            --region='${region}'")
                     }
                 } 
             }
