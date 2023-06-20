@@ -105,7 +105,7 @@ pipeline {
                             --service-account='${env.app_serviceaccount}'")
                         sh("gcloud run services update-traffic ${env.service_name} \
                         --to-latest \
-                        --region='${env.region}")
+                        --region='${env.region}'")
                         env.application_status = "Updating"
                     } else {
                         echo "The container is not running. Deploying the service."
@@ -117,7 +117,7 @@ pipeline {
                             --service-account='${env.app_serviceaccount}'")
                         sh("gcloud run services update-traffic ${env.service_name} \
                         --to-latest \
-                        --region='${env.region}")
+                        --region='${env.region}'")
                         env.application_status = "Creating"
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
