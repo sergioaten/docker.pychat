@@ -30,11 +30,23 @@ pipeline {
                     } else {
                         error "Invalid branch name. Only 'main' or 'dev' are allowed."
                     }
-                    env.project_id = sh(script: 'jq -r ".project_id" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
+                    env.project_id = sh(
+                        'jq -r ".project_id" $GOOGLE_APPLICATION_CREDENTIALS',
+                        returnStdout: true
+                    ).trim()
                     env.dockerimg_name = "${artifact_registry}/${project_id}/${repo}/${service_name}:${GIT_COMMIT}"
-                    env.service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true)trim()
-                    sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS')
-                    sh(script: "gcloud config set account ${service_account_email}", returnStdout: true)
+                    env.service_account_email = sh(
+                        'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS',
+                        returnStdout: true
+                    ).trim()
+                    sh(
+                        'gcloud auth activate-service-account \
+                        --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                    )
+                    sh(
+                        "gcloud config set account ${service_account_email}",
+                        returnStdout: true
+                    )
                 }
             }
         }
@@ -57,7 +69,12 @@ pipeline {
                 }
                 script {
                     echo "Getting the port used by the image for deployment"
-                    env.port = sh(script: "docker inspect --format='{{range \$p, \$conf := .Config.ExposedPorts}} {{\$p}} {{end}}' ${dockerimg_name} | grep -oE '[0-9]+'", returnStdout: true)
+                    env.port = sh(
+                        "docker inspect \
+                        --format='{{range \$p, \$conf := .Config.ExposedPorts}} {{\$p}} {{end}}' ${dockerimg_name} \
+                        | grep -oE '[0-9]+'",
+                        returnStdout: true
+                    )
                 }
             }
         }
@@ -74,22 +91,55 @@ pipeline {
             steps {
                 sh 'echo Checking if the application is already running to update the image version, otherwise, deploying to Cloud Run.'
                 script {
-                    def containerRunning = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='us-central1' --project='${project_id}'", returnStatus: true) == 0
-
+                    def containerRunning = sh(
+                        "gcloud run services describe ${service_name} \
+                        --format='value(status.url)' \
+                        --region='us-central1' \
+                        --project='${project_id}'",
+                        returnStatus: true
+                        ) == 0
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --service-account='${app_serviceaccount}'")
+                        sh(
+                            "gcloud run services update ${service_name} \
+                            --image='${dockerimg_name}' \
+                            --region='${region}' \
+                            --port='${port}' \
+                            --project='${project_id}' \
+                            --service-account='${app_serviceaccount}'"
+                        )
                         env.application_status = "Updating"
                     } else {
                         echo "The container is not running. Deploying the service."
-                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --service-account='${app_serviceaccount}'")
+                        sh(
+                            "gcloud run deploy ${service_name} \
+                            --image='${dockerimg_name}' \
+                            --region='${region}' \
+                            --port=${port} \
+                            --project='${project_id}' \
+                            --service-account='${app_serviceaccount}'"
+                        )
                         env.application_status = "Creating"
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
-                    sh 'gcloud run services add-iam-policy-binding ${service_name} --member="allUsers" --role="roles/run.invoker" --region="${region}" --project="${project_id}"'
+                    sh 'gcloud run services add-iam-policy-binding ${service_name} \
+                        --member="allUsers" \
+                        --role="roles/run.invoker" \
+                        --region="${region}" \
+                        --project="${project_id}"'
                     sh 'echo Performing test on the deployed application'
-                    env.url = sh(script: "gcloud run services describe ${service_name} --format='value(status.url)' --region='${region}' --project='${project_id}'", returnStdout: true).trim()
-                    env.responseCode = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${url}${test_path_url}", returnStdout: true)
+                    env.url = sh(
+                        "gcloud run services describe ${service_name} \
+                        --format='value(status.url)' \
+                        --region='${region}' \
+                        --project='${project_id}'",
+                        returnStdout: true
+                    ).trim()
+                    env.responseCode = sh(
+                        "curl -s -o /dev/null \
+                        -w '%{http_code}' ${url}${test_path_url}", 
+                        returnStdout: true
+                    )
                     if (responseCode.matches('^2.*$')) {
                         echo "The test passed. The response is ${responseCode} OK."
                     } else {
@@ -99,8 +149,20 @@ pipeline {
                             echo "Error caught: ${e.message}"
                         }
 
-                        def last_revision = sh(script: "gcloud run revisions list --service='${service_name}' --format='value(metadata.name)' --limit=2 --region='${region}' | tail -n 1")
-                        sh(script: "gcloud run services update-traffic '${service_name}' --to-revisions='${last_revision}' --region='${region}'")
+                        def last_revision = sh(
+                            "gcloud run revisions list \
+                            --service='${service_name}' \
+                            --format='value(metadata.name)' \
+                            --limit=2 \
+                            --region='${region}' \
+                            | tail -n 1",
+                            returnStdout: true
+                        )
+                        sh(
+                            "gcloud run services update-traffic '${service_name}' \
+                            --to-revisions='${last_revision}' \
+                            --region='${region}'"
+                        )
                     }
                 } 
             }
