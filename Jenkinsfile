@@ -162,7 +162,7 @@ pipeline {
                                 --to-revisions='${env.last_revision}' \
                                 --region='${env.region}'")
                         }
-                    
+                    }
                 } 
             }
         }
@@ -195,7 +195,7 @@ pipeline {
                 [name: "Build Number", template: env.BUILD_NUMBER],
                 [name: "Build URL", template: env.BUILD_URL],
                 [name: "Artifact", template: env.dockerimg_name],
-                [name: "Response Code", template: responseCode],
+                [name: "Response Code", template: env.response_msg],
                 [name: "Application Status", template: env.application_status],
                 [name: "Git Repository", template: env.GIT_URL],
                 [name: "Git Commit", template: env.GIT_COMMIT]
