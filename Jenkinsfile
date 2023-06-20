@@ -134,28 +134,35 @@ pipeline {
                                 -w '%{http_code}' ${env.url}${env.test_path_url}", 
                         returnStdout: true
                     )
-                    if (responseCode.matches('^2.*$')) {
-                        echo "The test passed. The response is ${env.responseCode} OK."
+                    sh "echo ${env.responseCode}"
+                    if (env.responseCode == null) {
+                        env.response_msg = 'Error: Null'
+                        error('El valor de responseCode es null. Ocurrió un error en la llamada a curl.')
                     } else {
-                        try {
-                            error "The test failed. The response is ${env.responseCode} FAIL."
-                        } catch (Exception e) {
-                            echo "Error caught: ${e.message}"
-                        }
+                        env.response_msg = env.responseCode
+                        if (responseCode.matches('^2.*$')) {
+                            echo "The test passed. The response is ${env.responseCode} OK."
+                        } else {
+                            try {
+                                error "The test failed. The response is ${env.responseCode} FAIL."
+                            } catch (Exception e) {
+                                echo "Error caught: ${e.message}"
+                            }
 
-                        def last_revision = sh(
-                            script: "gcloud run revisions list \
-                                    --service='${env.service_name}' \
-                                    --format='value(metadata.name)' \
-                                    --limit=2 \
-                                    --region='${env.region}' \
-                                    | tail -n 1",
-                            returnStdout: true
-                        )
-                        sh("gcloud run services update-traffic '${env.service_name}' \
-                            --to-revisions='${env.last_revision}' \
-                            --region='${env.region}'")
-                    }
+                            def last_revision = sh(
+                                script: "gcloud run revisions list \
+                                        --service='${env.service_name}' \
+                                        --format='value(metadata.name)' \
+                                        --limit=2 \
+                                        --region='${env.region}' \
+                                        | tail -n 1",
+                                returnStdout: true
+                            )
+                            sh("gcloud run services update-traffic '${env.service_name}' \
+                                --to-revisions='${env.last_revision}' \
+                                --region='${env.region}'")
+                        }
+                    
                 } 
             }
         }
@@ -170,7 +177,7 @@ pipeline {
                 [name: "Build Number", template: env.BUILD_NUMBER],
                 [name: "Build URL", template: env.BUILD_URL],
                 [name: "Artifact", template: env.dockerimg_name],
-                [name: "Response Code", template: env.responseCode],
+                [name: "Response Code", template: env.response_msg],
                 [name: "Application Status", template: env.application_status],
                 [name: "Application URL", template: env.url],
                 [name: "Git Repository", template: env.GIT_URL],
