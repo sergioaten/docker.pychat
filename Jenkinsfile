@@ -127,6 +127,12 @@ pipeline {
                         --region="${region}" \
                         --project="${project_id}"'
                     sh 'echo Performing test on the deployed application'
+                }
+            }
+        }
+        stage('HTTP REST Test') {
+            steps {
+                script {        
                     env.url = sh(
                         script: "gcloud run services describe ${env.service_name} \
                                 --format='value(status.url)' \
