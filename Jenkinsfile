@@ -13,7 +13,6 @@ pipeline {
         service_name = 'pychat' //Service name
         repo = 'jenkins-repo' //Artifact Registry repo
         test_path_url = '/' //Url with "/" - example -> /test
-        responseCode = ""
     }
 
     stages {
