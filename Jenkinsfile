@@ -133,7 +133,6 @@ pipeline {
                                 -w '%{http_code}' ${env.url}${env.test_path_url}", 
                         returnStdout: true
                     )
-                    sh "echo ${env.responseCode}"
                     if (env.responseCode == null) {
                         env.response_msg = 'Error: Null'
                         error('El valor de responseCode es null. Ocurrió un error en la llamada a curl.')
