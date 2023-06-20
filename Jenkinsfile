@@ -8,7 +8,6 @@ pipeline {
         msteams_webhook = credentials('msteams-webhook-test') //MS Teams webhook
         dev_credentials = credentials('gcp-cloudrun-json') //Load dev credentials
         prod_credentials = credentials('gcp-cloudrun-json') //Load prod credentials
-        application_credentials = credentials('gcp-pychat-json') //Application credentials
         region = 'us-central1' //Google Cloud Region
         artifact_registry = "${region}-docker.pkg.dev" //Artifact Registry URL
         service_name = 'pychat' //Service name
@@ -23,9 +22,11 @@ pipeline {
                     if (BRANCH_NAME == "dev") {
                         echo "Loading dev environment credentials."
                         env.GOOGLE_APPLICATION_CREDENTIALS = dev_credentials
+                        env.app_serviceaccount = "pychat@jenkins-project-388812.iam.gserviceaccount.com"
                     } else if (BRANCH_NAME == "main") {
                         echo "Loading production environment credentials."
-                        env.GOOGLE_APPLICATION_CREDENTIALS = prod_credentials     
+                        env.GOOGLE_APPLICATION_CREDENTIALS = prod_credentials 
+                        env.app_serviceaccount = "pychat@jenkins-project-388812.iam.gserviceaccount.com"    
                     } else {
                         error "Invalid branch name. Only 'main' or 'dev' are allowed."
                     }
@@ -34,7 +35,6 @@ pipeline {
                     service_account_email = sh(script: 'jq -r ".client_email" $GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS', returnStdout: true).trim()
                     sh(script: "gcloud config set account ${service_account_email}", returnStdout: true).trim()
-                    sh(script: 'sudo cp $application_credentials credentials.json', returnStdout: true).trim()
                     sh(script: 'sudo chown jenkins:jenkins credentials.json', returnStdout: true).trim()
                 }
             }
@@ -79,11 +79,11 @@ pipeline {
 
                     if (containerRunning) {
                         echo "The container is running. Updating the image."
-                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
+                        sh("gcloud run services update ${service_name} --image='${dockerimg_name}' --region='${region}' --port='${port}' --project='${project_id}' --service-account='${app_serviceaccount}'")
                         env.application_status = "Updating"
                     } else {
                         echo "The container is not running. Deploying the service."
-                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --update-env-vars GOOGLE_APPLICATION_CREDENTIALS='credentials.json'")
+                        sh("gcloud run deploy ${service_name} --image='${dockerimg_name}' --region='${region}' --port=${port} --project='${project_id}' --service-account='${app_serviceaccount}'")
                         env.application_status = "Creating"
                     }
                     sh 'echo Publishing the Cloud Run service for all users'
