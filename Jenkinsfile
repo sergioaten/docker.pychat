@@ -74,8 +74,8 @@ pipeline {
         stage('Upload artifact to repo') {
             steps {
                 sh 'echo Uploading Docker image to Google Cloud "Artifact Registry"'
-                sh 'gcloud auth configure-docker ${env.artifact_registry} --quiet'
-                sh 'docker push ${env.dockerimg_name}'
+                sh 'gcloud auth configure-docker ${artifact_registry} --quiet'
+                sh 'docker push ${dockerimg_name}'
             }
         }
 
@@ -115,12 +115,12 @@ pipeline {
                         --region='${env.region}'")
                         env.application_status = "Creating"
                     }
-                    sh 'echo Publishing the Cloud Run service for all users'
-                    sh 'gcloud run services add-iam-policy-binding ${service_name} \
-                        --member="allUsers" \
-                        --role="roles/run.invoker" \
-                        --region="${region}" \
-                        --project="${project_id}"'
+                    echo "Publishing the Cloud Run service for all users"
+                    sh("gcloud run services add-iam-policy-binding ${service_name} \
+                        --member='allUsers' \
+                        --role='roles/run.invoker' \
+                        --region='${region}' \
+                        --project='${project_id}'")
                 }
             }
         }
