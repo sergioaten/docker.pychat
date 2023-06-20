@@ -58,7 +58,7 @@ pipeline {
         stage('Building artifact') {
             steps {
                 sh 'echo Building Docker image'
-                sh 'docker build . -t ${env.dockerimg_name}'
+                sh 'docker build . -t ${dockerimg_name}'
                 script {
                     echo "Getting the port used by the image for deployment"
                     env.port = sh(
