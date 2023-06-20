@@ -183,4 +183,4 @@ def register():
 # Run the app when the script is executed directly
 if __name__ == '__main__':
     messages = charge_all_database()
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000)

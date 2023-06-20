@@ -4,3 +4,4 @@ eventlet
 google-cloud-secret-manager
 google-cloud-firestore
 bcrypt
+debugpy
