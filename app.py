@@ -5,6 +5,7 @@ from google.cloud import firestore
 from google.cloud import secretmanager
 import datetime
 import users as u
+import config
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
@@ -48,7 +49,7 @@ def upload_to_firestore(data):
     check_db_connection()
 
     # Use the existing Firestore client for database operations
-    collection_ref = db.collection('registros')
+    collection_ref = db.collection(config.FS_MESG_COLLECTION)
     collection_ref.add(data)
 
 def check_db_connection():
@@ -144,7 +145,7 @@ def login():
         password = request.form['password']
 
         # Check if the username exists in the 'usuarios' collection
-        collection_ref = db.collection('usuarios')
+        collection_ref = db.collection(config.FS_USERS_COLLECTION)
         query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
         result = query.get()
 
@@ -188,7 +189,7 @@ def register():
             return jsonify(result='error', message='Wrong hash'), 200
 
         # Check if the username already exists in the 'usuarios' collection
-        collection_ref = db.collection('usuarios')
+        collection_ref = db.collection(config.FS_USERS_COLLECTION)
         query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
         result = query.get()
         
