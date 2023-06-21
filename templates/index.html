@@ -24,10 +24,14 @@
             <div id="name-form">
                 <h3 class="mb-3">Ingrese su nombre</h3>
                 <div class="input-group mb-3">
-                    <input type="text" id="name-input" class="form-control" placeholder="Nombre">
+                    <input type="text" name="name" id="name-input" class="form-control" placeholder="Nombre">
+                    <input type="password" name="passwd" id="password-login-input" class="form-control" placeholder="Contraseña">
                     <div class="input-group-append">
                         <button id="name-submit" class="btn btn-primary">Ingresar</button>
                     </div>
+                </div>
+                <div id="login-error" class="alert alert-danger" style="display: none;">
+                    <span id="login-error" class="login-error">&times;</span>
                 </div>
             </div>
     
@@ -55,13 +59,13 @@
                 <div id="register-container">
                     <h3 class="mb-3">Registration</h3>
                     <div class="input-group mb-3">
-                        <input type="text" id="username-input" class="form-control" placeholder="Username">
+                        <input type="text" name="username" id="username-register-input" class="form-control" placeholder="Username">
                     </div>
                     <div class="input-group mb-3">
-                        <input type="text" id="hash-input" class="form-control" placeholder="Hash">
+                        <input type="text" name="hash" id="hash-register-input" class="form-control" placeholder="Hash">
                     </div>
                     <div class="input-group mb-3">
-                        <input type="password" id="password-input" class="form-control" placeholder="Password">
+                        <input type="password" name="password" id="password-register-input" class="form-control" placeholder="Password">
                     </div>
                     <button id="register-submit" class="btn btn-primary">Register</button>
                     <div id="user-success-message" class="alert alert-success" style="display: none;">

@@ -133,6 +133,40 @@ def set_name(name):
     # Store the user's name in the users dictionary with the session ID as the key
     users[request.sid] = name
 
+@app.route('/login', methods=['POST'])
+def login():
+    global db
+    check_db_connection()
+
+    if request.method == 'POST':
+        # Handle the form submission
+        name = request.form['username']
+        password = request.form['password']
+
+        # Check if the username exists in the 'usuarios' collection
+        collection_ref = db.collection('usuarios')
+        query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
+        result = query.get()
+
+        if len(result) == 0:
+            # Username doesn't exist
+            return jsonify(result='error', message='Invalid credentials'), 200
+        else:
+            user_data = result[0].to_dict()
+            hashed_password = user_data.get('password')
+
+            if u.verify_password(password, hashed_password):
+                # Login successful
+                return jsonify(result='success', message='Login successful'), 200
+            else:
+                # Invalid password
+                return jsonify(result='error', message='Invalid credentials'), 200
+
+    # Return an error response for unsupported request methods
+    return jsonify(result='error', message='Invalid request method'), 405
+
+
+
 @app.route('/register', methods=['POST'])
 def register():
     global db

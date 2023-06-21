@@ -100,10 +100,60 @@ $(document).ready(function() {
       $('#register-form').show(); // Show the registration form
   });
 
+  $('#name-submit').on('click', function() {
+    var username = $('#name-input').val().trim();
+    var password = $('#password-login-input').val().trim();
+
+    // Create an object with the login data
+    var loginData = {
+        username: username,
+        password: password
+    };
+
+    // Send the login data to the back-end using AJAX
+    $.ajax({
+        type: 'POST',
+        url: '/login', // Update with the appropriate URL for your back-end route
+        data: loginData,
+        success: function(response) {
+            // Handle the success response from the server
+            console.log(response); // Log the response for debugging purposes
+    
+            if (response.result === 'success') {
+                // Redirect to the home page or perform any other desired action
+                setUsername();
+            } else {
+                // Display the error message
+                displayLoginErrorMessage(response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Handle the error response from the server
+            console.error(error); // Log the error for debugging purposes
+    
+            // Display the error message
+            displayLoginErrorMessage('An error occurred. Please try again.');
+        }
+    });
+});
+function displayLoginErrorMessage(message) {
+    // Set the error message text
+    $('#login-error').text(message);
+
+    // Show the error message
+    $('#login-error').show();
+
+    // Hide the error message after a certain duration (e.g., 5 seconds)
+    setTimeout(function() {
+        $('#login-error').hide();
+    }, 5000);
+}
+
+
   $('#register-submit').on('click', function() {
-    var username = $('#username-input').val().trim();
-    var hash = $('#hash-input').val().trim();
-    var password = $('#password-input').val().trim();
+    var username = $('#username-register-input').val().trim();
+    var hash = $('#hash-register-input').val().trim();
+    var password = $('#password-register-input').val().trim();
 
     // Create an object with the registration data
     var registrationData = {
@@ -149,41 +199,27 @@ function displaySuccessMessage(message) {
     // Hide the success message after a certain duration (e.g., 3 seconds)
     setTimeout(function() {
         $('#user-success-message').hide();
-    }, 3000);
+    }, 5000);
 }
 
 // Function to display the error message
 function displayErrorMessage(message) {
     // Set the error message text
-    $('#user-error-message').text(message);
+    $('#register-error-message').text(message);
 
     // Show the error message
-    $('#user-error-message').show();
+    $('#register-error-message').show();
 
     // Hide the error message after a certain duration (e.g., 5 seconds)
     setTimeout(function() {
-        $('#user-error-message').hide();
+        $('#register-error-message').hide();
     }, 5000);
 }
 
-// Function to display the token error message
-function displayTokenErrorMessage(message) {
-    // Set the token error message text
-    $('#token-error-message').text(message);
-
-    // Show the token error message
-    $('#token-error-message').show();
-
-    // Hide the token error message after a certain duration (e.g., 5 seconds)
-    setTimeout(function() {
-        $('#token-error-message').hide();
-    }, 5000);
-}
-
-  // Event listener for the name submit button click
-  $('#name-submit').on('click', function() {
-      setUsername();
-  });
+  //// Event listener for the name submit button click
+  //$('#name-submit').on('click', function() {
+  //    setUsername();
+  //});
 
   // Event listener for the name input field keypress
   $('#name-input').on('keypress', function(event) {
