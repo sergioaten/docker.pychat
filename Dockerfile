@@ -3,7 +3,6 @@ FROM python:3.11.0-alpine
 RUN mkdir app
 WORKDIR /app
 
-COPY credentials.json .
 COPY static/ static/
 COPY templates/ templates/
 COPY *.py .
