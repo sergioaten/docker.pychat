@@ -234,13 +234,28 @@ function displayErrorMessage(message) {
       showChatHistory(messages);
   });
 
-  // Event listener for receiving a new message from the server
-  socket.on('message', function(data) {
-      var message = escapeHtml(data.message);
-      var sender = escapeHtml(data.name);
-      $('#messages').append('<li><strong>' + sender + '</strong> ' + message + '</li>');
-      scrollToBottom();
-  });
+// Define a map to store the calculated colors for senders
+var senderColors = {};
+
+socket.on('message', function(data) {
+  var message = escapeHtml(data.message);
+  var sender = escapeHtml(data.name);
+  var nameParts = sender.split("-");
+  var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
+
+  // Calculate the hash only if it hasn't been calculated before for this sender
+  if (!senderColors.hasOwnProperty(senderToHash)) {
+    var hash = CryptoJS.MD5(senderToHash);
+    var color = hash.toString().substring(0, 6); // Convert hash to string before substring
+    senderColors[senderToHash] = color;
+  }
+
+  var color = senderColors[senderToHash]; // Retrieve the color for the sender
+
+  var listItem = $('<li></li>').html('<strong style="color: #' + color + '">' + sender + '</strong> ' + message);
+  $('#messages').append(listItem);
+  scrollToBottom();
+});
 
   // Event listener for the send button click
   $('#send').on('click', function() {
