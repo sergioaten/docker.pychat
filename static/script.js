@@ -37,7 +37,9 @@ $(document).ready(function() {
           for (var i = 0; i < messages.length; i++) {
               var message = messages[i].message;
               var sender = messages[i].name;
-              messagesContainer.append('<li><strong>' + sender + '</strong> ' + message + '</li>');
+              var color = sender.toString().split("-");
+              color = CryptoJS.MD5(color[2]).toString().substring(0, 6);
+              messagesContainer.append('<li><strong style="color: #' + color + '">' + sender + '</strong> ' + message + '</li>');
           }
 
           // Scroll to the last message
@@ -240,18 +242,20 @@ var senderColors = {};
 socket.on('message', function(data) {
   var message = escapeHtml(data.message);
   var sender = escapeHtml(data.name);
-  var nameParts = sender.split("-");
-  var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
+//   var nameParts = sender.split("-");
+//   var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
 
-  // Calculate the hash only if it hasn't been calculated before for this sender
-  if (!senderColors.hasOwnProperty(senderToHash)) {
-    var hash = CryptoJS.MD5(senderToHash);
-    var color = hash.toString().substring(0, 6); // Convert hash to string before substring
-    senderColors[senderToHash] = color;
-  }
+//   // Calculate the hash only if it hasn't been calculated before for this sender
+//   if (!senderColors.hasOwnProperty(senderToHash)) {
+//     var hash = CryptoJS.MD5(senderToHash);
+//     var color = hash.toString().substring(0, 6); // Convert hash to string before substring
+//     senderColors[senderToHash] = color;
+//   }
 
-  var color = senderColors[senderToHash]; // Retrieve the color for the sender
-
+//   var color = senderColors[senderToHash]; // Retrieve the color for the sender
+  
+  var color = sender.toString().split("-");
+  color = CryptoJS.MD5(color[2]).toString().substring(0, 6);
   var listItem = $('<li></li>').html('<strong style="color: #' + color + '">' + sender + '</strong> ' + message);
   $('#messages').append(listItem);
   scrollToBottom();
