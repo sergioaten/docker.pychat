@@ -1,32 +1,21 @@
-# This workflow build and push a Docker container to Google Artifact Registry and deploy it on Cloud Run when a commit is pushed to the "main" branch
-#
-# Overview:
-#
-# 1. Authenticate to Google Cloud
-# 2. Authenticate Docker to Artifact Registry
-# 3. Build a docker container
-# 4. Publish it to Google Artifact Registry
-# 5. Deploy it to Cloud Run
-#
-
 name: Build and Deploy to Cloud Run
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: ["dev"]
 
 env:
-  PROJECT_ID: jenkins-project-388812 # TODO: update Google Cloud project id
-  SERVICE: pychat # TODO: update Cloud Run service name
-  REGION: us-central1 # TODO: update Cloud Run service region
-  APP_SERVICE_ACCOUNT: pychat@jenkins-project-388812.iam.gserviceaccount.com
+  PROJECT_ID: jenkins-project-388812 # GCP Project ID
+  SERVICE: pychat # Service Name
+  REGION: us-central1 # Service Region
+  APP_SERVICE_ACCOUNT: pychat@jenkins-project-388812.iam.gserviceaccount.com # App Service Account
 
 jobs:
   deploy:
     # Add 'id-token' with the intended permissions for workload identity federation
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
 
     runs-on: ubuntu-latest
     steps:
@@ -41,11 +30,10 @@ jobs:
 
       - name: Google Auth
         id: gcp_auth
-        uses: 'google-github-actions/auth@v1'
+        uses: "google-github-actions/auth@v1"
         with:
-          credentials_json: '${{ secrets.GCP_CLOUDRUN_JSON_KEY }}'
+          credentials_json: "${{ secrets.GCP_CLOUDRUN_JSON_KEY }}"
 
-      # Authenticate Docker to Google Cloud Artifact Registry
       - name: Login to Google Artifact Registry
         id: repo_auth
         uses: docker/login-action@v2
@@ -53,13 +41,13 @@ jobs:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: _json_key
           password: ${{ secrets.GCP_CLOUDRUN_JSON_KEY }}
-          
-      # - name: Build and Push Container
-      #   id: build_push
-      #   run: |
-      #     docker build -t "${{ env.IMAGE }}" ./
-      #     docker push "${{ env.IMAGE }}"
-        
+
+      - name: Build and Push Container
+        id: build_push
+        run: |
+          docker build -t "${{ env.IMAGE }}" ./
+          docker push "${{ env.IMAGE }}"
+
       - name: Exporting PORT from docker image to env variable
         id: get_container_port
         run: |
@@ -81,56 +69,89 @@ jobs:
           json_output=$(yq eval -j -o=json "${{ github.workspace }}/pychat.yml")
           echo $json_output > pychat.json
 
-      # # END - Docker auth and build
-      # - name: Deploy to Cloud Run
-      #   id: deploy
-      #   uses: google-github-actions/deploy-cloudrun@v1
-      #   with:
-      #     metadata: ${{ github.workspace }}/pychat.json
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          metadata: ${{ github.workspace }}/pychat.json
 
       # If required, use the Cloud Run url output in later steps
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
-      
+
       - name: Microsoft Teams Notification
         id: ms_teams_notification
         if: always()
         run: |
-          cat << EOF > message.json
+          json_data='${{ toJson(steps) }}'
+          formatted_data=$(echo $json_data | jq -jr 'to_entries[] | { "name": .key, "value": .value.outcome }' \
+          | sed 's/}{/},{/g' \
+          | sed 's/} {/},{/g' | sed 's/"success"/"✅ OK"/g' \
+          | sed 's/"failure"/"❌ FAIL"/g')
+
+          cat << EOF > tmp_message.json
             {
               "@type": "MessageCard",
               "@context": "http://schema.org/extensions",
-              "themeColor": "0076D7",
-              "summary": "Testing Title",
+              "themeColor": "$(if [[ ${{ job.status }} == 'success' ]]; then echo '00FF00'; else echo 'FF0000'; fi)",
+              "title": "${{github.workflow}} > ${{ github.ref_name }} (${{github.run_number}})",
               "sections": [
-                  {
-                    "activityTitle": "Testing Title",
-                    "activitySubtitle": "On PyChat",
-                    "facts": [
-                      ## FACTS ##
-                    ],
-                    "markdown": true
-                  }
+                {
+                  "activityTitle": "Changelog",
+                  "activitySubtitle": "${{ github.event.head_commit.message }}"
+                },
+                {
+                  "text": "<h1><strong>App details</strong></h1>",
+                  "facts": [
+                    {
+                    "name": "Aplication name",
+                    "value": "${{ env.SERVICE }}"
+                    },
+                    {
+                    "name": "Application port",
+                    "value": "${{ env.PORT }}"
+                    },
+                    {
+                    "name": "Application region",
+                    "value": "${{ env.REGION }}"
+                    }                    
+                  ],
+                  "markdown": true
+                },
+                {
+                  "text": "<h1><strong>Pipeline Steps</strong></h1>",
+                  "facts": [
+                    $(echo "$formatted_data")
+                  ],
+                  "markdown": true
+                }
               ],
               "potentialAction": [
-                  {
-                    "@type": "OpenUri",
-                    "name": "Open App in browser",
-                    "targets": [
-                        {
-                          "os": "default",
-                          "uri": ""
-                        }
+                {
+                  "@type": "OpenUri",
+                  "name": "Open App in browser",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "${{ steps.deploy.outputs.url }}"
+                    }
+                  ]
+                },
+                {
+                  "@type": "OpenUri",
+                  "name": "View commit",
+                  "targets": [
+                      {
+                        "os": "default",
+                        "uri": "https://github.com/sergioaten/docker.pychat/commit/${{ github.sha }}"
+                      }
                     ]
                   }
-              ]
+                ]
             }
           EOF
-          echo '${{ toJson(steps) }}' >> steps.json
-          data=$(cat steps.json | jq -r 'to_entries[] | select(.key | test("^[^0-9]")) | { "name": .key, "value": .value.outcome }')
-          formatted_data=$(echo $data | sed 's/} {/},{/g')
-          echo "$formatted_data" > steps.json
-          data=$(cat steps.json)
-          sed -i 's|## FACTS ##|'"$data"'|g' ${{ github.workspace }}/message.json
-          cat message.json
+
+          jq '.' "${{ github.workspace }}/tmp_message.json" > "${{ github.workspace }}/message.json"
+
+          # Send Notification
           curl -X POST ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }} --header 'Content-Type: application/json' -d @message.json
