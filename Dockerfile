@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY static/ static/
 COPY templates/ templates/
-COPY *.py .
+COPY *.py ./
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
