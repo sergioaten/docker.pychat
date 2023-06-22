@@ -244,7 +244,7 @@ socket.on('message', function(data) {
   var sender = escapeHtml(data.name);
 //   var nameParts = sender.split("-");
 //   var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
-
+//
 //   // Calculate the hash only if it hasn't been calculated before for this sender
 //   if (!senderColors.hasOwnProperty(senderToHash)) {
 //     var hash = CryptoJS.MD5(senderToHash);
