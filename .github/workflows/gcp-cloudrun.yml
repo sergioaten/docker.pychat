@@ -163,7 +163,8 @@ jobs:
             }
           EOF
 
+          #Format JSON correctly
           jq '.' "${{ github.workspace }}/tmp_message.json" > "${{ github.workspace }}/message.json"
-
+          cat "${{ github.workspace }}/message.json"
           # Send Notification
           curl -X POST ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }} --header 'Content-Type: application/json' -d @message.json
