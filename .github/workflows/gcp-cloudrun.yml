@@ -75,9 +75,20 @@ jobs:
         with:
           metadata: ${{ github.workspace }}/pychat.json
 
-      # If required, use the Cloud Run url output in later steps
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+      - name: Show Output Service URL
+        run: |
+          echo ${{ steps.deploy.outputs.url }}
+
+      - name: Curl test application
+        id: curl_test
+        run: |
+          responsecode=$(curl -s -o /dev/null -w '%{http_code}' ${{ steps.deploy.outputs.url }})
+          if [[ $responsecode == 200 ]]; then
+            echo "Test passed"
+          else
+            echo "Test failed"
+            exit 1
+          fi
 
       - name: Microsoft Teams Notification
         id: ms_teams_notification
