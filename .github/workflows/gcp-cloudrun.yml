@@ -94,6 +94,7 @@ jobs:
               "@type": "MessageCard",
               "@context": "http://schema.org/extensions",
               "themeColor": "$(if [[ ${{ job.status }} == 'success' ]]; then echo '00FF00'; else echo 'FF0000'; fi)",
+              "summary": "MS Teams JSON Payload",
               "title": "${{github.workflow}} > ${{ github.ref_name }} (${{github.run_number}})",
               "sections": [
                 {
