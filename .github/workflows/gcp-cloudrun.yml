@@ -110,9 +110,12 @@ jobs:
             "sections": [{
                 "activityTitle": "Testing Title",
                 "activitySubtitle": "On PyChat",
-                "facts": [{
-                  "Clave" : "Valor"
-                }],
+                "facts": [
+                {
+                  "name": "Assigned to",
+                  "value": "Unassigned"
+                }
+                ],
                 "markdown": true
             }],
             "potentialAction": [{
