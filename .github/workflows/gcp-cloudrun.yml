@@ -19,7 +19,7 @@ env:
   PROJECT_ID: jenkins-project-388812 # TODO: update Google Cloud project id
   SERVICE: pychat # TODO: update Cloud Run service name
   REGION: us-central1 # TODO: update Cloud Run service region
-  IMAGE: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}
+  APP_SERVICE_ACCOUNT: pychat@jenkins-project-388812.iam.gserviceaccount.com
 
 jobs:
   deploy:
@@ -33,14 +33,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Setup Environment
+        id: 'setup_env'
+        run: |
+          GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-7)
+          echo "IMAGE=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/dockerimages/${{ env.SERVICE }}:$GITHUB_SHA_SHORT" >> $GITHUB_ENV
+          echo "REPO=$(echo $GITHUB_WORKSPACE | cut -d' ' -f2)" >> $GITHUB_ENV
+
       - name: Google Auth
-        id: 'auth'
+        id: 'gcp_auth'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GCP_CLOUDRUN_JSON_KEY }}'
 
       # Authenticate Docker to Google Cloud Artifact Registry
-      - name: Login to GAR
+      - name: Login to Google Artifact Registry
+        id: 'art_repo_auth'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
@@ -48,24 +56,71 @@ jobs:
           password: ${{ secrets.GCP_CLOUDRUN_JSON_KEY }}
           
       - name: Build and Push Container
-        run: |-
+        id: 'build_and_push'
+        run: |
           docker build -t "${{ env.IMAGE }}" ./
           docker push "${{ env.IMAGE }}"
+        
+      - name: Exporting PORT from docker image to env variable
+        id: 'get_container_port'
+        run: |
+          echo "PORT=$(docker inspect "${{ env.IMAGE }}" \
+          | jq -r '.[0].Config.ExposedPorts | keys[] | split("/")[0]')" >> $GITHUB_ENV
 
       - name: Prepare pychat.yml
+        id: 'prepare_pychat_yaml'
         run: |
-          sed -i 's/{{ SERVICE }}/${{ env.SERVICE }}/g' ${{ GITHUB_WORKSPACE }}/pychat.yml
-          sed -i 's/{{ REGION }}/${{ env.REGION }}/g' ${{ GITHUB_WORKSPACE }}/pychat.yml
-          sed -i 's/{{ PORT }}/${{ env.PORT }}/g' ${{ GITHUB_WORKSPACE }}/pychat.yml
-          sed -i 's/{{ IMAGE }}/${{ env.IMAGE }}/g' ${{ GITHUB_WORKSPACE }}/pychat.yml
+          sed -i 's|## SERVICE ##|${{ env.SERVICE }}|g' ${{ env.REPO }}/pychat.yml
+          sed -i 's|## REGION ##|${{ env.REGION }}|g' ${{ env.REPO }}/pychat.yml
+          sed -i 's|## SERVICEACC ##|${{ env.APP_SERVICE_ACCOUNT }}|g' ${{ env.REPO }}/pychat.yml
+          sed -i 's|## IMAGE ##|${{ env.IMAGE }}|g' ${{ env.REPO }}/pychat.yml
+          sed -i 's|## PORT ##|${{ env.PORT }}|g' ${{ env.REPO }}/pychat.yml
+
+      - name: Convert YAML Config file to JSON
+        id: 'yaml_to_json'
+        run: |
+          cat pychat.yml
+          json_output=$(yq eval -j -o=json "${{ env.REPO }}/pychat.yml")
+          echo $json_output > pychat.json
+          ls -la
 
       # END - Docker auth and build
       - name: Deploy to Cloud Run
         id: deploy
-        uses: google-github-actions/deploy-cloudrun@v0
+        uses: google-github-actions/deploy-cloudrun@v1
         with:
-          metadata: ${{ GITHUB_WORKSPACE }}/pychat.yml
+          metadata: ${{ github.workspace }}/pychat.json
 
       # If required, use the Cloud Run url output in later steps
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
+
+      - name: Microsoft Teams Notification
+        id: 'ms_teams_notification'
+        uses: skitionek/notify-microsoft-teams@master
+        if: always()
+        with:
+          webhook_url: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
+          raw: >-
+            {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": "Testing Title",
+            "sections": [{
+                "activityTitle": "Testing Title",
+                "activitySubtitle": "On PyChat",
+                "facts": [{
+                  "Clave" : "Valor"
+                }],
+                "markdown": true
+            }],
+            "potentialAction": [{{
+                "@type": "OpenUri",
+                "name": "Open App in browser",
+                "targets": [{
+                    "os": "default",
+                    "uri": "${{ steps.deploy.outputs.url }}"
+                }]
+            }]
+            }
