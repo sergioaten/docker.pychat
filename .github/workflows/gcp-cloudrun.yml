@@ -115,7 +115,7 @@ jobs:
                 }],
                 "markdown": true
             }],
-            "potentialAction": [{{
+            "potentialAction": [{
                 "@type": "OpenUri",
                 "name": "Open App in browser",
                 "targets": [{
