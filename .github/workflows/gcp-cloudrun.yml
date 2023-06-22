@@ -54,11 +54,11 @@ jobs:
           username: _json_key
           password: ${{ secrets.GCP_CLOUDRUN_JSON_KEY }}
           
-      - name: Build and Push Container
-        id: build_push
-        run: |
-          docker build -t "${{ env.IMAGE }}" ./
-          docker push "${{ env.IMAGE }}"
+      # - name: Build and Push Container
+      #   id: build_push
+      #   run: |
+      #     docker build -t "${{ env.IMAGE }}" ./
+      #     docker push "${{ env.IMAGE }}"
         
       - name: Exporting PORT from docker image to env variable
         id: get_container_port
@@ -81,23 +81,56 @@ jobs:
           json_output=$(yq eval -j -o=json "${{ github.workspace }}/pychat.yml")
           echo $json_output > pychat.json
 
-      # END - Docker auth and build
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v1
-        with:
-          metadata: ${{ github.workspace }}/pychat.json
+      # # END - Docker auth and build
+      # - name: Deploy to Cloud Run
+      #   id: deploy
+      #   uses: google-github-actions/deploy-cloudrun@v1
+      #   with:
+      #     metadata: ${{ github.workspace }}/pychat.json
 
       # If required, use the Cloud Run url output in later steps
       - name: Show Output
         run: echo ${{ steps.deploy.outputs.url }}
-
+      
       - name: Microsoft Teams Notification
         id: ms_teams_notification
-        uses: skitionek/notify-microsoft-teams@master
         if: always()
-        with:
-          job: ${{ toJson(job) }}
-          needs: ${{ toJson(needs) }}
-          steps: ${{ toJson(steps) }}
-          webhook_url: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
+        run: |
+          cat << EOF > message.json
+            {
+              "@type": "MessageCard",
+              "@context": "http://schema.org/extensions",
+              "themeColor": "0076D7",
+              "summary": "Testing Title",
+              "sections": [
+                  {
+                    "activityTitle": "Testing Title",
+                    "activitySubtitle": "On PyChat",
+                    "facts": [
+                      ## FACTS ##
+                    ],
+                    "markdown": true
+                  }
+              ],
+              "potentialAction": [
+                  {
+                    "@type": "OpenUri",
+                    "name": "Open App in browser",
+                    "targets": [
+                        {
+                          "os": "default",
+                          "uri": ""
+                        }
+                    ]
+                  }
+              ]
+            }
+          EOF
+          echo '${{ toJson(steps) }}' >> steps.json
+          data=$(cat steps.json | jq -r 'to_entries[] | select(.key | test("^[^0-9]")) | { "name": .key, "value": .value.outcome }')
+          formatted_data=$(echo $data | sed 's/} {/},{/g')
+          echo "$formatted_data" > steps.json
+          data=$(cat steps.json)
+          sed -i 's|## FACTS ##|'"$data"'|g' ${{ github.workspace }}/message.json
+          cat message.json
+          curl -X POST ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }} --header 'Content-Type: application/json' -d @message.json
