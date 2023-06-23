@@ -19,6 +19,8 @@ pipeline {
         stage('Preparing environment') {
             steps {
                 script {
+                    sh('cd app \
+                    && cp * ../')
                     if (env.BRANCH_NAME == "dev") {
                         echo "Loading dev environment credentials."
                         env.GOOGLE_APPLICATION_CREDENTIALS = env.dev_credentials
