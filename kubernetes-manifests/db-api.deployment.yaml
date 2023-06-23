@@ -1,0 +1,31 @@
+# This Deployment manifest defines:
+# - single-replica deployment of the container image, with label "app: pychat"
+# - Pod exposes port 8080
+# - specify PORT environment variable to the container process
+# Syntax reference https://kubernetes.io/docs/concepts/configuration/overview/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-api
+  template:
+    metadata:
+      labels:
+        app: db-api
+    spec:
+      containers:
+      - name: server
+        image: db-api
+        ports:
+        - containerPort: 5001
+        env:
+        - name: PORT
+          value: "5001"
+        readinessProbe:
+          tcpSocket:
+            port: 5001
+          initialDelaySeconds: 5

@@ -4,4 +4,7 @@ eventlet
 google-cloud-secret-manager
 google-cloud-firestore
 bcrypt
+gunicorn
 debugpy
+gevent>=1.4
+requests
