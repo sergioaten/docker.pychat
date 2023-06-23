@@ -9,6 +9,7 @@ env:
   SERVICE: pychat # Service Name
   REGION: us-central1 # Service Region
   APP_SERVICE_ACCOUNT: pychat@jenkins-project-388812.iam.gserviceaccount.com # App Service Account
+  APP_DIR: app
 
 jobs:
   deploy:
@@ -20,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./app
+        working-directory: ${{ env.APP_DIR }}
 
     steps:
       - name: Checkout
@@ -31,6 +32,12 @@ jobs:
         run: |
           GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-7)
           echo "IMAGE=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/dockerimages/${{ env.SERVICE }}:$GITHUB_SHA_SHORT" >> $GITHUB_ENV
+          echo $GITHUB_WORKSPACE
+          if [[ -d "${{ github.workspace }}/${{ env.APP_DIR }}" ]]; then
+            echo "APP_PATH=${{ github.workspace }}/${{ env.APP_DIR }}" >> $GITHUB_ENV
+          else
+            echo "APP_PATH=${{ github.workspace }}" >> $GITHUB_ENV
+          fi
 
       - name: Google Auth
         id: gcp_auth
@@ -61,23 +68,23 @@ jobs:
       - name: Prepare pychat.yml
         id: prepare_pychat_yaml
         run: |
-          sed -i 's|## SERVICE ##|${{ env.SERVICE }}|g' ${{ github.workspace }}/pychat.yml
-          sed -i 's|## REGION ##|${{ env.REGION }}|g' ${{ github.workspace }}/pychat.yml
-          sed -i 's|## SERVICEACC ##|${{ env.APP_SERVICE_ACCOUNT }}|g' ${{ github.workspace }}/pychat.yml
-          sed -i 's|## IMAGE ##|${{ env.IMAGE }}|g' ${{ github.workspace }}/pychat.yml
-          sed -i 's|## PORT ##|${{ env.PORT }}|g' ${{ github.workspace }}/pychat.yml
+          sed -i 's|## SERVICE ##|${{ env.SERVICE }}|g' ${{ env.APP_PATH }}/conf/pychat.yml
+          sed -i 's|## REGION ##|${{ env.REGION }}|g' ${{ env.APP_PATH }}/conf/pychat.yml
+          sed -i 's|## SERVICEACC ##|${{ env.APP_SERVICE_ACCOUNT }}|g' ${{ env.APP_PATH }}/conf/pychat.yml
+          sed -i 's|## IMAGE ##|${{ env.IMAGE }}|g' ${{ env.APP_PATH }}/conf/pychat.yml
+          sed -i 's|## PORT ##|${{ env.PORT }}|g' ${{ env.APP_PATH }}/conf/pychat.yml
 
       - name: Convert YAML Config file to JSON
         id: yaml_to_json
         run: |
-          json_output=$(yq eval -j -o=json "${{ github.workspace }}/pychat.yml")
+          json_output=$(yq eval -j -o=json "${{ env.APP_PATH }}/conf/pychat.yml")
           echo $json_output > pychat.json
 
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v1
         with:
-          metadata: ${{ github.workspace }}/pychat.json
+          metadata: ${{ env.APP_PATH }}/pychat.json
 
       - name: Show Output Service URL
         run: |
@@ -110,7 +117,7 @@ jobs:
               "@context": "http://schema.org/extensions",
               "themeColor": "$(if [[ ${{ job.status }} == 'success' ]]; then echo '00FF00'; else echo 'FF0000'; fi)",
               "summary": "MS Teams JSON Payload",
-              "title": "${{github.workflow}} > ${{ github.ref_name }} (${{github.run_number}})",
+              "title": "${{ github.workflow }} > ${{ github.ref_name }} (${{ github.run_number }})",
               "sections": [
                 {
                   "activityTitle": "Changelog",
@@ -168,7 +175,7 @@ jobs:
           EOF
 
           #Format JSON correctly
-          jq '.' "${{ github.workspace }}/tmp_message.json" > "${{ github.workspace }}/message.json"
-          cat "${{ github.workspace }}/message.json"
+          jq '.' "${{ env.APP_PATH }}/tmp_message.json" > "${{ env.APP_PATH }}/message.json"
+          cat "${{ env.APP_PATH }}/message.json"
           # Send Notification
           curl -X POST ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }} --header 'Content-Type: application/json' -d @message.json
