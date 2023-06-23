@@ -4,11 +4,21 @@ from google.api_core.exceptions import GoogleAPIError
 from flask import Flask, jsonify, request
 import json
 import os
+import bcrypt
 
 FS_MESG_COLLECTION = 'registros'
 FS_USERS_COLLECTION = 'usuarios'
 
 app = Flask(__name__)
+
+db = None
+
+def check_db_connection():
+    global db
+
+    # Check if the Firestore client is initialized
+    if db is None:
+        initialize_firestore()
 
 def initialize_firestore():
     try:
@@ -39,6 +49,7 @@ def get_firestore_credentials():
 
 @app.route('/charge', methods=['GET'])
 def charge_all_database():
+    #initialize_firestore()
     try:
         collection_ref = db.collection('registros')
         query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
@@ -82,43 +93,37 @@ def check_db_connection():
     if db is None:
         initialize_firestore()
 
-@app.route('/secret', methods=['POST'])
-def check_secret():
-    initialize_firestore()
+@app.route('/check_username', methods=['POST'])
+def check_user_and_hash():
+    check_db_connection()
 
-    # Get the hash value from the request
-    hash_value = request.json.get('hash_value')
+    if request.method == 'POST':
+        # Handle the form submission
+        name = request.form['username']
+        password = request.form['password']
 
-    # Check if the hash value exists in the 'secret' collection
-    secret_collection = db.collection('secret')
-    query = secret_collection.where('register_token', '==', hash_value)
-    result = query.get()
+        # Check if the username exists in the 'usuarios' collection
+        collection_ref = db.collection(FS_USERS_COLLECTION)
+        query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
+        result = query.get()
 
-    if len(result) == 0:
-        # Hash not found, indicating an invalid hash
-        return jsonify(result='error', message='Wrong hash'), 200
-    else:
-        # Hash found, indicating a valid hash
-        return jsonify(result='success', message='Valid hash'), 200
+        if len(result) == 0:
+            # Username doesn't exist
+            return jsonify(result='error', message='Invalid credentials'), 200
+        else:
+            user_data = result[0].to_dict()
+            hashed_password = user_data.get('password')
 
-@app.route('/users', methods=['POST'])
-def check_username():
-    initialize_firestore()
+            if verify_password(password, hashed_password):
+                # Login successful
+                return jsonify(result='success', message='Login successful'), 200
+            else:
+                # Invalid password
+                return jsonify(result='error', message='Invalid credentials'), 200
 
-    # Get the username from the request
-    username = request.json.get('username')
+    # Return an error response for unsupported request methods
+    return jsonify(result='error', message='Invalid request method'), 405
 
-    # Check if the username exists in the 'usuarios' collection
-    users_collection = db.collection('usuarios')
-    query = users_collection.where('username', '==', username)
-    result = query.get()
-
-    if len(result) > 0:
-        # Username already exists
-        return jsonify(result='error', message='Username already exists'), 200
-    else:
-        # Username does not exist
-        return jsonify(result='success', message='Username available'), 200
 
 @app.route('/register', methods=['POST'])
 def register_user():
@@ -133,6 +138,19 @@ def register_user():
     doc_ref.set(user_data)
 
     return jsonify(result='success', message='Registration successful'), 200
+
+def hash_password(password):
+    # Generate a salt
+    salt = bcrypt.gensalt()
+
+    # Hash the password
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+
+    # Return the hashed password as a string
+    return hashed_password.decode('utf-8')
+
+def verify_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 if __name__ == '__main__':
     # Initialize Firestore client during application startup

@@ -29,5 +29,5 @@ spec:
   # Add the dependency on the db-api deployment
   # Wait until the db-api deployment is ready before starting the pychat deployment
   # Adjust the selector and matchLabels based on your deployment configuration
-  dependsOn:
-    - name: db-api
+  #dependsOn:
+  #  - name: db-api

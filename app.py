@@ -35,6 +35,8 @@ def charge_all_messages():
         return messages
         # Process the messages data as needed
     else:
+        with open("./output.txt", "w+") as f:
+            f.write(messages)
         print('Failed to retrieve messages:', response.status_code)
 
 
@@ -94,10 +96,10 @@ def login():
         name = request.form['username']
         password = request.form['password']
 
-        # Make a request to the db-api for login validation
-        login_api = f"{db_endpoint}/charge"
-        login_payload = {'username': name, 'password': password}
-        response = requests.post(login_api, json=login_payload)
+        # Make a request to the user and hash check API endpoint
+        api_endpoint = f"{db_endpoint}/check_username"
+        payload = {'username': name, 'password': password}
+        response = requests.post(api_endpoint, json=payload)
 
         if response.status_code == 200:
             result = response.json()
@@ -107,6 +109,7 @@ def login():
 
     # Return an error response for unsupported request methods
     return jsonify(result='error', message='Invalid request method'), 405
+
 
 @app.route('/register', methods=['POST'])
 def register():
