@@ -17,16 +17,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: test
-        uses: sergioaten/msteams-notifications@v1
-        with:
-          facts: |
-            - clave: test
-              valor: test
-            - clave: test2
-              valor: test2
-            - clave: test2
-              valor: test2
+      # - name: test
+      #   uses: sergioaten/msteams-notifications@v1
+      #   with:
+      #     facts: |
+      #       - clave: test
+      #         valor: test
+      #       - clave: test2
+      #         valor: test2
+      #       - clave: test2
+      #         valor: test2
 
       - name: test
         uses: sergioaten/msteams-notifications@v1
@@ -35,3 +35,4 @@ jobs:
             - test: test
             - test2: test2
             - test3: test3
+            - test4: test4
