@@ -19,3 +19,7 @@ jobs:
 
       - name: test
         uses: sergioaten/msteams-notifications@v1.2
+        with:
+          facts:
+            - clave: test
+              valor: test
