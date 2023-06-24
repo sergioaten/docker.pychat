@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    # Add 'id-token' with the intended permissions for workload identity federations
+    # Add 'id-token' with the intended permissions for workload identity federationss
     permissions:
       contents: "read"
       id-token: "write"
