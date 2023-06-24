@@ -23,3 +23,5 @@ jobs:
           facts: |
             - clave: test
               valor: test
+            - clave: test2
+              valor: test2
