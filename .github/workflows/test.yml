@@ -25,6 +25,8 @@ jobs:
               valor: test
             - clave: test2
               valor: test2
+            - clave: test2
+              valor: test2
 
       - name: test
         uses: sergioaten/msteams-notifications@v1
