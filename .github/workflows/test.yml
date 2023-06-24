@@ -1,4 +1,4 @@
-name: Build and Deploy to Cloud Run
+name: Testing customaction
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    # Add 'id-token' with the intended permissions for workload identity federation
+    # Add 'id-token' with the intended permissions for workload identity federations
     permissions:
       contents: "read"
       id-token: "write"
