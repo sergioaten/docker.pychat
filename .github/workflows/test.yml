@@ -21,7 +21,7 @@ jobs:
         uses: sergioaten/msteams-notifications@v1.3
         with:
           facts: |
-            clave: test
-            valor: test
-            clave: test2
-            valor: test2
+            - clave: test
+              valor: test
+            - clave: test2
+              valor: test2
