@@ -30,10 +30,9 @@ jobs:
 
       - name: test
         if: always()
-        uses: sergioaten/msteams-notifications@v0.4
+        uses: sergioaten/msteams-notifications@main
         with:
           webhook: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
-          stepsFacts: ${{ toJson(steps) }}
           factsTitle: <h1><strong>App details</h1></strong>
           facts: |
             - Aplication name: pychat
