@@ -24,6 +24,7 @@ jobs:
       - name: test
         uses: sergioaten/msteams-notifications@v0.4
         with:
+          webhook: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
           stepsFacts: ${{ toJson(steps) }}
           factsTitle: <h1><strong>App details</h1></strong>
           facts: |
