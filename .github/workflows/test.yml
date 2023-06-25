@@ -29,6 +29,7 @@ jobs:
           echo '${{ toJson(steps) }}'
 
       - name: test
+        if: always
         uses: sergioaten/msteams-notifications@v0.4
         with:
           webhook: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
