@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: test
-        uses: sergioaten/msteams-notifications@v0.3
+        uses: sergioaten/msteams-notifications@v0.4
         with:
           stepsFacts: ${{ toJson(steps) }}
           factsTitle: <h1><strong>App details</h1></strong>
