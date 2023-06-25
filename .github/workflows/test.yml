@@ -20,7 +20,7 @@ jobs:
       - name: test
         uses: sergioaten/msteams-notifications@v0.1
         with:
-          stepsFacts: ${{ toJson(steps) }}
+          stepsFacts: "test"
           factsTitle: <h1><strong>App details</h1></strong>
           facts: |
             Aplication name: pychat
