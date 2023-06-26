@@ -5,6 +5,7 @@ import datetime
 import users as u
 import requests
 import os
+import time
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
@@ -12,6 +13,8 @@ app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+first_run = True
 
 db_host = 'db-api-service'
 db_port = 5001
@@ -21,7 +24,19 @@ def charge_all_messages():
     charge_api = f"{db_endpoint}/charge"
     response = requests.get(charge_api)
     if response.status_code == 200:
-        messages = response.json()
+        result = response.json()
+        #result_strings = [data['name'] + data['message'] for data in result]
+        #messages = '\n'.join(result_strings)
+
+        for data in result:
+            messages.append(data['name'] + data['message'])
+
+        #with open("output.txt", 'w+') as out:
+        #    result = [data['name'] + data['message'] for data in messages]
+        #    message_string = '\n'.join(result)
+        #    out.write(message_string)
+        #with open("output.txt", 'w+') as out:
+        #    out.write(messages)
         return messages
         # Process the messages data as needed
     else:
@@ -43,6 +58,11 @@ messages = []
 # Define route for the root URL
 @app.route('/')
 def index():
+    global first_run  # Use the 'global' keyword to modify the global variable
+    global messages
+    if first_run:
+        messages = charge_all_messages()
+        first_run = False
     # Render the 'index.html' template
     return render_template('index.html')
 
@@ -81,6 +101,7 @@ def set_name(name):
 def login():
     if request.method == 'POST':
         # Handle the form submission
+        #messages = charge_all_messages()
         name = request.form['username']
         password = request.form['password']
 
@@ -129,5 +150,4 @@ def register():
 
 # Run the app when the script is executed directly
 if __name__ == '__main__':
-    #messages = charge_all_messages()
     socketio.run(app, host='0.0.0.0', port=5000)

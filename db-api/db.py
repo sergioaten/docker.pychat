@@ -47,6 +47,25 @@ def get_firestore_credentials():
 
     return secret_data
 
+@app.route('/charge', methods=['GET'])
+def charge_all_messages():
+    if request.method == 'GET':
+        check_db_connection()
+        collection_ref = db.collection('registros')
+        query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
+        documents = query.get()
+
+        # Prepare the list of messages
+        messages = []
+        for doc in documents:
+            data = doc.to_dict()
+            name = data['name']
+            msg = data['message']
+            time = data['date_message'].strftime('%m/%d-%H:%M:%S')  # Convert to string
+            message = {'name': time + " - " + name + "@devops:~$", 'message': msg}
+            messages.append(message)
+        return messages  
+
 @app.route('/check_username', methods=['POST'])
 def check_user_and_hash():
     check_db_connection()
