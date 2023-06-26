@@ -5,7 +5,6 @@ import datetime
 import users as u
 import requests
 import os
-import socket
 
 # Create Flask app instance
 app = Flask(__name__, static_url_path='/static')
@@ -19,24 +18,13 @@ db_port = 5001
 db_endpoint = f"http://{db_host}:{db_port}"
 
 def charge_all_messages():
-    #try:
-    #    ip_address = socket.gethostbyname(db_host)
-    #    print(f"The IP address of {db_host} is: {ip_address}")
-    #except socket.gaierror:
-    #    print(f"Failed to resolve DNS for {db_host}")
-    
     charge_api = f"{db_endpoint}/charge"
     response = requests.get(charge_api)
     if response.status_code == 200:
         messages = response.json()
-        #print(messages)
-        with open("./output.txt", "w+") as f:
-            f.write(messages)
         return messages
         # Process the messages data as needed
     else:
-        with open("./output.txt", "w+") as f:
-            f.write(messages)
         print('Failed to retrieve messages:', response.status_code)
 
 
@@ -98,8 +86,11 @@ def login():
 
         # Make a request to the user and hash check API endpoint
         api_endpoint = f"{db_endpoint}/check_username"
-        payload = {'username': name, 'password': password}
-        response = requests.post(api_endpoint, json=payload)
+        login_payload = {
+            'username': name,
+            'password': password
+        }
+        response = requests.post(api_endpoint, data=login_payload)
 
         if response.status_code == 200:
             result = response.json()
@@ -119,10 +110,15 @@ def register():
         hash_value = request.form['hash']
         password = request.form['password']
 
+        register_payload = {
+            'username': name,
+            'hash_value': hash_value,
+            'password': password
+        }
+
         # Make a request to the db-api for registration
         register_api = f"{db_endpoint}/register"
-        register_payload = {'username': name, 'hash_value': hash_value, 'password': password}
-        response = requests.post(register_api, json=register_payload)
+        response = requests.post(register_api, data=register_payload)
 
         if response.status_code == 200:
             result = response.json()
@@ -130,8 +126,6 @@ def register():
         else:
             return jsonify(result='error', message='Failed to register'), 500
 
-    # Return an error response for unsupported request methods
-    return jsonify(result='error', message='Invalid request method'), 405
 
 # Run the app when the script is executed directly
 if __name__ == '__main__':

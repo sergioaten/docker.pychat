@@ -29,7 +29,7 @@ def initialize_firestore():
         global db
         db = firestore.Client.from_service_account_info(secret_data)
         print("Firestore client initialized successfully")
-    except (GoogleAPIError) as e:
+    except GoogleAPIError as e:
         # Handle initialization errors
         print("Failed to initialize Firestore client:", str(e))
 
@@ -46,52 +46,6 @@ def get_firestore_credentials():
     secret_data = json.loads(secret_value)
 
     return secret_data
-
-@app.route('/charge', methods=['GET'])
-def charge_all_database():
-    #initialize_firestore()
-    try:
-        collection_ref = db.collection('registros')
-        query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
-        documents = query.get()
-
-        # Prepare the list of messages
-        messages = []
-        for doc in documents:
-            data = doc.to_dict()
-            name = data['name']
-            msg = data['message']
-            time = data['date_message'].strftime('%m/%d-%H:%M:%S')  # Convert to string
-            message = {'name': time + " - " + name + "@devops:~$", 'message': msg}
-            messages.append(message)
-
-        return jsonify(messages)
-    except GoogleAPIError as e:
-        # Handle Firestore query errors
-        return jsonify(error=str(e)), 500
-
-@app.route('/upload', methods=['POST'])
-def upload_to_firestore():
-    global db
-
-    # Check if the Firestore client is initialized
-    check_db_connection()
-
-    # Get the data from the request body
-    data = request.get_json()
-
-    # Use the existing Firestore client for database operations
-    collection_ref = db.collection(FS_MESG_COLLECTION)
-    collection_ref.add(data)
-
-    return jsonify({'message': 'Data uploaded successfully'})
-
-def check_db_connection():
-    global db
-
-    # Check if the Firestore client is initialized
-    if db is None:
-        initialize_firestore()
 
 @app.route('/check_username', methods=['POST'])
 def check_user_and_hash():
@@ -124,20 +78,47 @@ def check_user_and_hash():
     # Return an error response for unsupported request methods
     return jsonify(result='error', message='Invalid request method'), 405
 
-
 @app.route('/register', methods=['POST'])
 def register_user():
-    initialize_firestore()
+    check_db_connection()
 
     # Get the user data from the request
-    user_data = request.json
+    name = request.form['username']
+    hash_value = request.form['hash_value']
+    password = request.form['password']
 
-    # Add the new user to the 'usuarios' collection
-    users_collection = db.collection('usuarios')
-    doc_ref = users_collection.document()
-    doc_ref.set(user_data)
 
-    return jsonify(result='success', message='Registration successful'), 200
+    # Check the hash
+    collection_ref = db.collection('secret')
+    query = collection_ref.where('register_token', '==', hash_value).limit(1)
+    result_hash_check = query.get()
+
+    if not result_hash_check:
+        # No hash check found, indicating an invalid hash
+        return jsonify(result='error', message='Wrong hash'), 200
+
+    # Check if the username already exists in the 'usuarios' collection
+    collection_ref = db.collection(FS_USERS_COLLECTION)
+    query = collection_ref.where('username', '==', name).limit(1)
+    result = query.get()
+
+    if result:
+        # Username already exists
+        return jsonify(result='error', message='Username already exists'), 200
+    else:
+        hashed_password = hash_password(password)
+        # Get the server time
+        server_time = firestore.SERVER_TIMESTAMP
+        # Create a new user document with the provided username and password
+        new_user = {
+            'username': name,
+            'password': hashed_password,
+            'register_date': server_time
+        }
+        collection_ref.add(new_user)  # Add the new user document to the 'usuarios' collection
+        return jsonify(result='create', message='Registration successful'), 200
+
+   
 
 def hash_password(password):
     # Generate a salt
@@ -152,8 +133,10 @@ def hash_password(password):
 def verify_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
+@app.route('/hello', methods=['GET'])
+def hello():
+    return jsonify(message='Hello')
+
 if __name__ == '__main__':
-    # Initialize Firestore client during application startup
-    print(os.system("ip a"))
-    initialize_firestore()
+    check_db_connection()
     app.run(host='0.0.0.0', port=5001)
