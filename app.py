@@ -29,7 +29,8 @@ def charge_all_messages():
         #messages = '\n'.join(result_strings)
 
         for data in result:
-            messages.append(data['name'] + data['message'])
+            message = {'name': data['name'], 'message': data['message']}
+            messages.append(message)
 
         #with open("output.txt", 'w+') as out:
         #    result = [data['name'] + data['message'] for data in messages]
