@@ -102,81 +102,25 @@ jobs:
           fi
 
       - name: Microsoft Teams Notification
-        id: ms_teams_notification
+        id: msteams_notification
+        uses: sergioaten/msteams-notifications@v0.1-beta
         if: always()
-        run: |
-          json_data='${{ toJson(steps) }}'
-          formatted_data=$(echo $json_data | jq -jr 'to_entries[] | { "name": .key, "value": .value.outcome }' \
-          | sed 's/}{/},{/g' \
-          | sed 's/} {/},{/g' | sed 's/"success"/"✅ OK"/g' \
-          | sed 's/"failure"/"❌ FAIL"/g')
-          | sed 's/"skipped"/"🐇 SKIP"/g')
-
-          cat << EOF > tmp_message.json
-            {
-              "@type": "MessageCard",
-              "@context": "http://schema.org/extensions",
-              "themeColor": "$(if [[ ${{ job.status }} == 'success' ]]; then echo '00FF00'; else echo 'FF0000'; fi)",
-              "summary": "MS Teams JSON Payload",
-              "title": "${{ github.workflow }} > ${{ github.ref_name }} (${{ github.run_number }})",
-              "sections": [
-                {
-                  "activityTitle": "Changelog",
-                  "activitySubtitle": "${{ github.event.head_commit.message }}"
-                },
-                {
-                  "text": "<h1><strong>App details</strong></h1>",
-                  "facts": [
-                    {
-                    "name": "Aplication name",
-                    "value": "${{ env.SERVICE }}"
-                    },
-                    {
-                    "name": "Application port",
-                    "value": "${{ env.PORT }}"
-                    },
-                    {
-                    "name": "Application region",
-                    "value": "${{ env.REGION }}"
-                    }                    
-                  ],
-                  "markdown": true
-                },
-                {
-                  "text": "<h1><strong>Pipeline Steps</strong></h1>",
-                  "facts": [
-                    $(echo "$formatted_data")
-                  ],
-                  "markdown": true
-                }
-              ],
-              "potentialAction": [
-                {
-                  "@type": "OpenUri",
-                  "name": "Open App in browser",
-                  "targets": [
-                    {
-                      "os": "default",
-                      "uri": "${{ steps.deploy.outputs.url }}"
-                    }
-                  ]
-                },
-                {
-                  "@type": "OpenUri",
-                  "name": "View commit",
-                  "targets": [
-                      {
-                        "os": "default",
-                        "uri": "https://github.com/sergioaten/docker.pychat/commit/${{ github.sha }}"
-                      }
-                    ]
-                  }
-                ]
-            }
-          EOF
-
-          #Format JSON correctly
-          jq '.' "${{ env.APP_PATH }}/tmp_message.json" > "${{ env.APP_PATH }}/message.json"
-          cat "${{ env.APP_PATH }}/message.json"
-          # Send Notification
-          curl -X POST ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }} --header 'Content-Type: application/json' -d @message.json
+        with:
+          webhook: ${{ secrets.MSTEAMS_WEBHOOK_PYCHAT }}
+          steps: ${{ toJson(steps) }}
+          factsTitle: <h1><strong>App details</h1></strong>
+          facts: |
+            - Aplication name: ${{ env.SERVICE }}
+            - Appliaction port: ${{ env.PORT }}
+            - Application region: ${{ env.REGION }}
+          buttons: |
+            - name: 'View commit'
+              type: 'OpenUri'
+              targets:
+                - os: 'default'
+                  uri: 'https://github.com/sergioaten/docker.pychat/commit/${{ github.sha }}'
+            - name: 'Open App in browser'
+              type: 'OpenUri'
+              targets:
+                - os: 'default'
+                  uri: '${{ steps.deploy.outputs.url }}'
