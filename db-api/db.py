@@ -5,13 +5,39 @@ from flask import Flask, jsonify, request
 import json
 import os
 import config as conf
-import datetime
+from datetime import datetime, timedelta
 import encryption as enc
 
 
 app = Flask(__name__)
 
 db = None
+
+def get_current_time():
+    server_time = firestore.SERVER_TIMESTAMP
+    return server_time
+
+def format_time(time):
+    date_str, time_str = time.split('-')
+
+    # Extract the hours component from the time string
+    hours_str = time_str.split(':')[0]
+    hours = int(hours_str)
+
+    # Add 2 hours to the hours component
+    hours += 2
+
+    # Adjust the hours if needed
+    if hours >= 24:
+        hours -= 24
+
+    # Update the hours component in the time string
+    hours_str = str(hours).zfill(2)
+    adjusted_time_str = hours_str + ':' + ':'.join(time_str.split(':')[1:])
+
+    # Combine the adjusted date and time components
+    adjusted_time = date_str + '-' + adjusted_time_str
+    return adjusted_time
 
 def check_db_connection():
     global db
@@ -62,8 +88,15 @@ def charge_all_messages():
         name = data['name']
         msg = data['message']
         try:
+            # Format the adjusted timestamp
+
             time = data['date_message'].strftime('%m/%d-%H:%M:%S')  # Convert to string
-            message = {'name': time + " - " + name + "@devops:~$", 'message': msg}
+            formated_time = format_time(time)
+            #time = data['date_message']  # Convert to string
+            if name == "Tg":
+                with open("out.txt", 'w+') as out:
+                    out.write(formated_time)
+            message = {'name': formated_time + " - " + name + "@devops:~$", 'message': msg}
             messages.append(message)
         except AttributeError:
             print("Bad time format")
@@ -77,13 +110,13 @@ def upload_to_firestore():
     # Get the data from the request form
     name = request.form['name']
     message = request.form['message']
-    date_message = request.form['date_message']
-
+    #date_message = request.form['date_message']
+    server_time = get_current_time()
     # Create a dictionary to store the message data
     data = {
         'name': name,
         'message': message,
-        'date_message': date_message
+        'date_message': server_time
     }
 
     # Use the existing Firestore client for database operations
@@ -93,7 +126,6 @@ def upload_to_firestore():
     # Return a response or appropriate status code if needed
     return "Data uploaded successfully"
 
-    return 'Data uploaded to Firestore'
 
 @app.route('/check_username', methods=['POST'])
 def check_user_and_hash():
@@ -156,7 +188,7 @@ def register_user():
     else:
         hashed_password = enc.hash_password(password)
         # Get the server time
-        server_time = firestore.SERVER_TIMESTAMP
+        server_time = get_current_time()
         # Create a new user document with the provided username and password
         new_user = {
             'username': name,

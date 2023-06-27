@@ -79,7 +79,7 @@ def handle_message(data):
     time_formatted = time.strftime('%m/%d-%H:%M:%S')
 
     # Send the message data to the database
-    message_to_database = {'name': escape(users[request.sid]), 'message': escape(data['message']), 'date_message': time}
+    message_to_database = {'name': escape(users[request.sid]), 'message': escape(data['message'])}
     
     api_endpoint = f"{db_endpoint}/upload"
     requests.post(api_endpoint, data=message_to_database)
