@@ -9,7 +9,7 @@ build:
   artifacts:
   - context: db-api
     image: db-api
-  - context: .
+  - context: app
     image: pychat
 # defines the Kubernetes manifests to deploy on each run
 deploy:

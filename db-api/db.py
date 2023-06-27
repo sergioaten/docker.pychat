@@ -5,9 +5,9 @@ from flask import Flask, jsonify, request
 import json
 import os
 import bcrypt
+import config as conf
 
-FS_MESG_COLLECTION = 'registros'
-FS_USERS_COLLECTION = 'usuarios'
+
 
 app = Flask(__name__)
 
@@ -66,6 +66,22 @@ def charge_all_messages():
             messages.append(message)
         return messages  
 
+# API endpoint for uploading data to Firestore
+@app.route('/upload', methods=['POST'])
+def upload_to_firestore():
+    check_db_connection()
+    # Get the data from the request
+    data = request.get_json()
+
+    # Check if the Firestore client is initialized
+    check_db_connection()
+
+    # Use the existing Firestore client for database operations
+    collection_ref = db.collection(conf.FS_MESG_COLLECTION)
+    collection_ref.add(data)
+
+    return 'Data uploaded to Firestore'
+
 @app.route('/check_username', methods=['POST'])
 def check_user_and_hash():
     check_db_connection()
@@ -76,7 +92,7 @@ def check_user_and_hash():
         password = request.form['password']
 
         # Check if the username exists in the 'usuarios' collection
-        collection_ref = db.collection(FS_USERS_COLLECTION)
+        collection_ref = db.collection(conf.FS_USERS_COLLECTION)
         query = collection_ref.where('username', '==', name)  # Query for documents where 'username' is equal to the provided name
         result = query.get()
 
@@ -117,7 +133,7 @@ def register_user():
         return jsonify(result='error', message='Wrong hash'), 200
 
     # Check if the username already exists in the 'usuarios' collection
-    collection_ref = db.collection(FS_USERS_COLLECTION)
+    collection_ref = db.collection(conf.FS_USERS_COLLECTION)
     query = collection_ref.where('username', '==', name).limit(1)
     result = query.get()
 

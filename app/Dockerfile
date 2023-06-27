@@ -5,9 +5,8 @@ WORKDIR /app
 
 COPY static/ static/
 COPY templates/ templates/
-COPY app.py .
-COPY app2.py .
-COPY users.py .
+COPY app.py app.py
+COPY app2.py app2.py
 
 
 COPY requirements.txt requirements.txt

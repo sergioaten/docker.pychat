@@ -2,7 +2,6 @@
 from flask import Flask, render_template, request, escape, jsonify
 from flask_socketio import SocketIO, emit
 import datetime
-import users as u
 import requests
 import os
 import time
@@ -81,7 +80,10 @@ def handle_message(data):
 
     # Send the message data to the database
     message_to_database = {'name': escape(users[request.sid]), 'message': escape(data['message']), 'date_message': time}
-    upload_to_firestore(message_to_database)
+    
+    api_endpoint = f"{db_endpoint}/upload"
+    requests.post(api_endpoint, data=message_to_database)
+    #upload_to_firestore(message_to_database)
 
     # Create a message dictionary with the sender's name and the message content
     message = {'name': escape(time_formatted + " - " + users[request.sid] + "@devops:~$") if request.sid in users else 'Anónimo', 'message': escape(data['message'])}

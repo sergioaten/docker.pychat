@@ -3,7 +3,8 @@ FROM python:3.11.0-alpine
 RUN mkdir /app
 WORKDIR /app
 
-COPY db.py .
+COPY db.py db.py
+COPY config.py .
 
 
 COPY requirements.txt requirements.txt
