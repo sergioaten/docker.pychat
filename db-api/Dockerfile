@@ -4,7 +4,8 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY db.py db.py
-COPY config.py .
+COPY config.py config.py
+COPY encryption.py encryption.py
 
 
 COPY requirements.txt requirements.txt

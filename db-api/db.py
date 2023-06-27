@@ -4,9 +4,9 @@ from google.api_core.exceptions import GoogleAPIError
 from flask import Flask, jsonify, request
 import json
 import os
-import bcrypt
 import config as conf
-
+import datetime
+import encryption as enc
 
 
 app = Flask(__name__)
@@ -57,28 +57,41 @@ def charge_all_messages():
 
         # Prepare the list of messages
         messages = []
-        for doc in documents:
-            data = doc.to_dict()
-            name = data['name']
-            msg = data['message']
+    for doc in documents:
+        data = doc.to_dict()
+        name = data['name']
+        msg = data['message']
+        try:
             time = data['date_message'].strftime('%m/%d-%H:%M:%S')  # Convert to string
             message = {'name': time + " - " + name + "@devops:~$", 'message': msg}
             messages.append(message)
-        return messages  
+        except AttributeError:
+            print("Bad time format")
+    return messages 
 
 # API endpoint for uploading data to Firestore
 @app.route('/upload', methods=['POST'])
 def upload_to_firestore():
     check_db_connection()
-    # Get the data from the request
-    data = request.get_json()
 
-    # Check if the Firestore client is initialized
-    check_db_connection()
+    # Get the data from the request form
+    name = request.form['name']
+    message = request.form['message']
+    date_message = request.form['date_message']
+
+    # Create a dictionary to store the message data
+    data = {
+        'name': name,
+        'message': message,
+        'date_message': date_message
+    }
 
     # Use the existing Firestore client for database operations
     collection_ref = db.collection(conf.FS_MESG_COLLECTION)
     collection_ref.add(data)
+
+    # Return a response or appropriate status code if needed
+    return "Data uploaded successfully"
 
     return 'Data uploaded to Firestore'
 
@@ -103,7 +116,7 @@ def check_user_and_hash():
             user_data = result[0].to_dict()
             hashed_password = user_data.get('password')
 
-            if verify_password(password, hashed_password):
+            if enc.verify_password(password, hashed_password):
                 # Login successful
                 return jsonify(result='success', message='Login successful'), 200
             else:
@@ -141,7 +154,7 @@ def register_user():
         # Username already exists
         return jsonify(result='error', message='Username already exists'), 200
     else:
-        hashed_password = hash_password(password)
+        hashed_password = enc.hash_password(password)
         # Get the server time
         server_time = firestore.SERVER_TIMESTAMP
         # Create a new user document with the provided username and password
@@ -154,19 +167,6 @@ def register_user():
         return jsonify(result='create', message='Registration successful'), 200
 
    
-
-def hash_password(password):
-    # Generate a salt
-    salt = bcrypt.gensalt()
-
-    # Hash the password
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-
-    # Return the hashed password as a string
-    return hashed_password.decode('utf-8')
-
-def verify_password(password, hashed_password):
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 @app.route('/hello', methods=['GET'])
 def hello():
