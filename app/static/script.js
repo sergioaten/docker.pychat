@@ -37,7 +37,18 @@ $(document).ready(function() {
           for (var i = 0; i < messages.length; i++) {
               var message = messages[i].message;
               var sender = messages[i].name;
-              messagesContainer.append('<li><strong>' + sender + '</strong> ' + message + '</li>');
+              var nameParts = sender.split("-");
+              var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
+            
+              // Calculate the hash only if it hasn't been calculated before for this sender
+              if (!senderColors.hasOwnProperty(senderToHash)) {
+                var hash = CryptoJS.MD5(senderToHash);
+                var color = hash.toString().substring(0, 6); // Convert hash to string before substring
+                senderColors[senderToHash] = color;
+              }
+            
+              var color = senderColors[senderToHash]; // Retrieve the color for the sender
+              messagesContainer.append('<li><strong style="color: #' + color + ';">' + sender + '</strong> ' + message + '</li>');
           }
 
           // Scroll to the last message
