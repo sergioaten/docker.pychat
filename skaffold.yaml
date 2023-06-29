@@ -8,9 +8,9 @@ build:
   # defines where to find the code at build time and where to push the resulting image
   artifacts:
   - context: db-api
-    image: db-api
+    image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/db-api
   - context: app
-    image: pychat
+    image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/pychat
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
