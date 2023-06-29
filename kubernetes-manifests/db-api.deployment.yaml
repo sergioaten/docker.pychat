@@ -17,6 +17,11 @@ spec:
         image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/db-api
         ports:
         - containerPort: 5001
+        resources:
+            # You must specify requests for CPU to autoscale
+            # based on CPU utilization
+            requests:
+              cpu: "100m"
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: "/var/run/secret/cloud.google.com/service-account-key.json"
