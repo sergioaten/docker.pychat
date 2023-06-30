@@ -11,7 +11,8 @@
       "skaffoldConfig": "${workspaceFolder}/skaffold.yaml",
       "watch": true,
       "cleanUp": true,
-      "portForward": true
+      "portForward": true,
+      "imageRegistry": "gcr.io/jenkins-project-388812"
     }
   ]
 }

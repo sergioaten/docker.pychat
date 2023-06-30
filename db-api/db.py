@@ -77,7 +77,7 @@ def get_firestore_credentials():
 def charge_all_messages():
     if request.method == 'GET':
         check_db_connection()
-        collection_ref = db.collection('registros')
+        collection_ref = db.collection(conf.FS_MESG_COLLECTION)
         query = collection_ref.order_by('date_message', direction=firestore.Query.ASCENDING)
         documents = query.get()
 

@@ -15,6 +15,7 @@ spec:
       containers:
       - name: server
         image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/db-api
+        #image: db-api
         ports:
         - containerPort: 5001
         resources:

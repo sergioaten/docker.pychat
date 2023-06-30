@@ -24,21 +24,13 @@ def charge_all_messages():
     response = requests.get(charge_api)
     if response.status_code == 200:
         result = response.json()
-        #result_strings = [data['name'] + data['message'] for data in result]
-        #messages = '\n'.join(result_strings)
 
         for data in result:
             message = {'name': data['name'], 'message': data['message']}
             messages.append(message)
 
-        #with open("output.txt", 'w+') as out:
-        #    result = [data['name'] + data['message'] for data in messages]
-        #    message_string = '\n'.join(result)
-        #    out.write(message_string)
-        #with open("output.txt", 'w+') as out:
-        #    out.write(messages)
         return messages
-        # Process the messages data as needed
+
     else:
         print('Failed to retrieve messages:', response.status_code)
 

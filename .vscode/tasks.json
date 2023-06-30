@@ -8,7 +8,7 @@
     //            "label": "Pylint",
     //            "type": "shell",
     //            "command": "python",
-    //            "args": ["-m", "pylint", "src/app.py"],
+    //            "args": ["-m", "pylint", "app/app.py"],
     //            "problemMatcher": []
     //        }
     //    ]

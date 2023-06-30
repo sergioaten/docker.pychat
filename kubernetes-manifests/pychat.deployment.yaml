@@ -15,6 +15,7 @@ spec:
       containers:
       - name: server
         image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/pychat
+        #image: pychat
         ports:
         - containerPort: 5000
         env:
@@ -26,8 +27,3 @@ spec:
           tcpSocket:
             port: 5000
           initialDelaySeconds: 5
-  # Add the dependency on the db-api deployment
-  # Wait until the db-api deployment is ready before starting the pychat deployment
-  # Adjust the selector and matchLabels based on your deployment configuration
-  #dependsOn:
-  #  - name: db-api

@@ -9,8 +9,10 @@ build:
   artifacts:
   - context: db-api
     image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/db-api
+    #image: db-api
   - context: app
     image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/pychat
+    #image: pychat
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
