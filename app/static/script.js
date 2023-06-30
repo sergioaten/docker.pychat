@@ -37,7 +37,18 @@ $(document).ready(function() {
           for (var i = 0; i < messages.length; i++) {
               var message = messages[i].message;
               var sender = messages[i].name;
-              messagesContainer.append('<li><strong>' + sender + '</strong> ' + message + '</li>');
+              var nameParts = sender.split("-");
+              var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
+            
+              // Calculate the hash only if it hasn't been calculated before for this sender
+              if (!senderColors.hasOwnProperty(senderToHash)) {
+                var hash = CryptoJS.MD5(senderToHash);
+                var color = hash.toString().substring(0, 6); // Convert hash to string before substring
+                senderColors[senderToHash] = color;
+              }
+            
+              var color = senderColors[senderToHash]; // Retrieve the color for the sender
+              messagesContainer.append('<li><strong style="color: #' + color + ';">' + sender + '</strong> ' + message + '</li>');
           }
 
           // Scroll to the last message
@@ -100,10 +111,60 @@ $(document).ready(function() {
       $('#register-form').show(); // Show the registration form
   });
 
+  $('#name-submit').on('click', function() {
+    var username = $('#name-input').val().trim();
+    var password = $('#password-login-input').val().trim();
+
+    // Create an object with the login data
+    var loginData = {
+        username: username,
+        password: password
+    };
+
+    // Send the login data to the back-end using AJAX
+    $.ajax({
+        type: 'POST',
+        url: '/login', // Update with the appropriate URL for your back-end route
+        data: loginData,
+        success: function(response) {
+            // Handle the success response from the server
+            console.log(response); // Log the response for debugging purposes
+    
+            if (response.result === 'success') {
+                // Redirect to the home page or perform any other desired action
+                setUsername();
+            } else {
+                // Display the error message
+                displayLoginErrorMessage(response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Handle the error response from the server
+            console.error(error); // Log the error for debugging purposes
+    
+            // Display the error message
+            displayLoginErrorMessage('An error occurred. Please try again.');
+        }
+    });
+});
+function displayLoginErrorMessage(message) {
+    // Set the error message text
+    $('#login-error').text(message);
+
+    // Show the error message
+    $('#login-error').show();
+
+    // Hide the error message after a certain duration (e.g., 5 seconds)
+    setTimeout(function() {
+        $('#login-error').hide();
+    }, 5000);
+}
+
+
   $('#register-submit').on('click', function() {
-    var username = $('#username-input').val().trim();
-    var hash = $('#hash-input').val().trim();
-    var password = $('#password-input').val().trim();
+    var username = $('#username-register-input').val().trim();
+    var hash = $('#hash-register-input').val().trim();
+    var password = $('#password-register-input').val().trim();
 
     // Create an object with the registration data
     var registrationData = {
@@ -149,41 +210,27 @@ function displaySuccessMessage(message) {
     // Hide the success message after a certain duration (e.g., 3 seconds)
     setTimeout(function() {
         $('#user-success-message').hide();
-    }, 3000);
+    }, 5000);
 }
 
 // Function to display the error message
 function displayErrorMessage(message) {
     // Set the error message text
-    $('#user-error-message').text(message);
+    $('#register-error-message').text(message);
 
     // Show the error message
-    $('#user-error-message').show();
+    $('#register-error-message').show();
 
     // Hide the error message after a certain duration (e.g., 5 seconds)
     setTimeout(function() {
-        $('#user-error-message').hide();
+        $('#register-error-message').hide();
     }, 5000);
 }
 
-// Function to display the token error message
-function displayTokenErrorMessage(message) {
-    // Set the token error message text
-    $('#token-error-message').text(message);
-
-    // Show the token error message
-    $('#token-error-message').show();
-
-    // Hide the token error message after a certain duration (e.g., 5 seconds)
-    setTimeout(function() {
-        $('#token-error-message').hide();
-    }, 5000);
-}
-
-  // Event listener for the name submit button click
-  $('#name-submit').on('click', function() {
-      setUsername();
-  });
+  //// Event listener for the name submit button click
+  //$('#name-submit').on('click', function() {
+  //    setUsername();
+  //});
 
   // Event listener for the name input field keypress
   $('#name-input').on('keypress', function(event) {
@@ -198,13 +245,28 @@ function displayTokenErrorMessage(message) {
       showChatHistory(messages);
   });
 
-  // Event listener for receiving a new message from the server
-  socket.on('message', function(data) {
-      var message = escapeHtml(data.message);
-      var sender = escapeHtml(data.name);
-      $('#messages').append('<li><strong>' + sender + '</strong> ' + message + '</li>');
-      scrollToBottom();
-  });
+// Define a map to store the calculated colors for senders
+var senderColors = {};
+
+socket.on('message', function(data) {
+  var message = escapeHtml(data.message);
+  var sender = escapeHtml(data.name);
+  var nameParts = sender.split("-");
+  var senderToHash = nameParts[2]; // Assuming [1] is the desired part for hashing
+
+  // Calculate the hash only if it hasn't been calculated before for this sender
+  if (!senderColors.hasOwnProperty(senderToHash)) {
+    var hash = CryptoJS.MD5(senderToHash);
+    var color = hash.toString().substring(0, 6); // Convert hash to string before substring
+    senderColors[senderToHash] = color;
+  }
+
+  var color = senderColors[senderToHash]; // Retrieve the color for the sender
+
+  var listItem = $('<li></li>').html('<strong style="color: #' + color + '">' + sender + '</strong> ' + message);
+  $('#messages').append(listItem);
+  scrollToBottom();
+});
 
   // Event listener for the send button click
   $('#send').on('click', function() {

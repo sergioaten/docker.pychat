@@ -1,0 +1,32 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: db-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: db-api
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 15
+      policies:
+      - type: Pods
+        value: 3
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 15
+      policies:
+      - type: Percent
+        value: 80
+        periodSeconds: 15
+

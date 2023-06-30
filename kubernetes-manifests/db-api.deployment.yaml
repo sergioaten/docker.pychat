@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-api
+  template:
+    metadata:
+      labels:
+        app: db-api
+    spec:
+      containers:
+      - name: server
+        image: us-central1-docker.pkg.dev/jenkins-project-388812/dockerimages/db-api
+        #image: db-api
+        ports:
+        - containerPort: 5001
+        resources:
+            # You must specify requests for CPU to autoscale
+            # based on CPU utilization
+            requests:
+              cpu: "100m"
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: "/var/run/secret/cloud.google.com/service-account-key.json"
+          - name: PORT
+            value: "5001"
+        readinessProbe:
+          tcpSocket:
+            port: 5001
+          initialDelaySeconds: 5
+        volumeMounts:
+          - name: "service-account"
+            mountPath: "var/run/secret/cloud.google.com"
+      volumes:
+        - name: "service-account"
+          secret:
+            secretName: "my-service-account-secret"
